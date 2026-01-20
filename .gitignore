@@ -47,3 +47,14 @@ secrets/
 hello.txt
 local_smoke.txt
 
+test.ipynb
+
+alembic/**/*.pyc
+alembic/**/__pycache__/
+
+database/**/*.pyc
+database/**/__pycache__/
+
+config/**/*.pyc
+config/**/__pycache__/
+
