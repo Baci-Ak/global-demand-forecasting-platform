@@ -1,83 +1,102 @@
-from dataclasses import dataclass
+"""
+Kaggle client utilities.
+
+This module wraps the Kaggle CLI to:
+- validate Kaggle authentication
+- download and extract a configured competition dataset (e.g., M5)
+"""
+
+from __future__ import annotations
+
 import os
-from dotenv import load_dotenv
 import subprocess
-from pathlib import Path
 import zipfile
+from pathlib import Path
+from typing import Dict
+
+from config.config import settings
 
 
-load_dotenv()
+def _require_kaggle_credentials() -> None:
+    """
+    Ensure Kaggle credentials are available via Settings.
+    """
+    if not settings.KAGGLE_USERNAME or not settings.KAGGLE_API_TOKEN:
+        raise RuntimeError(
+            "Missing Kaggle credentials. Set KAGGLE_USERNAME and KAGGLE_API_TOKEN."
+        )
 
-@dataclass(frozen=True)
-class KaggleConfig:
-    username: str
-    api_token: str
-    dataset_name: str
-    destination: str
 
+def _kaggle_env() -> Dict[str, str]:
+    """
+    Build environment variables for Kaggle CLI subprocess calls.
 
-def load_kaggle_config() -> KaggleConfig:
-    username = os.getenv("KAGGLE_USERNAME")
-    token = os.getenv("KAGGLE_API_TOKEN")
-    dataset = os.getenv("M5_COMPETITION", "m5-forecasting-accuracy")
-    destination = os.getenv("M5_DESTINATION", "local_data/m5")
+    Kaggle CLI commonly expects:
+    - KAGGLE_USERNAME
+    - KAGGLE_KEY
+    """
+    _require_kaggle_credentials()
 
-    if not username or not token:
-        raise RuntimeError("KAGGLE_USERNAME or KAGGLE_API_TOKEN is not set in .env")
+    env = os.environ.copy()
+    env["KAGGLE_USERNAME"] = settings.KAGGLE_USERNAME  
+    env["KAGGLE_KEY"] = settings.KAGGLE_API_TOKEN     
 
-    return KaggleConfig(
-        username=username,
-        api_token=token,
-        dataset_name=dataset,
-        destination=destination,
-    )
+    env["KAGGLE_API_TOKEN"] = settings.KAGGLE_API_TOKEN  
+    return env
 
 
 def kaggle_smoke_test() -> None:
     """
-    Verifies Kaggle API auth by listing datasets using the shell.
+    Validate Kaggle CLI authentication by running a lightweight listing command.
     """
-    load_kaggle_config()
     result = subprocess.run(
         ["kaggle", "datasets", "list", "--max-size", "1"],
         capture_output=True,
         text=True,
         check=True,
+        env=_kaggle_env(),
     )
-    print(result.stdout.splitlines()[0])
+
+    lines = result.stdout.splitlines()
+    if lines:
+        print(lines[0])
 
 
 def download_dataset() -> str:
     """
-    Downloads M5 competition files using Kaggle CLI (env-token auth),
-    then unzips into the destination folder.
-    Returns the path where files were saved.
-    """
-    config = load_kaggle_config()
-    os.makedirs(config.destination, exist_ok=True)
+    Download and extract the Kaggle competition dataset configured in Settings.
 
-    # Use Kaggle CLI because it supports env-token auth cleanly (KAGGLE_API_TOKEN)
+    Uses:
+    - M5_COMPETITION: competition slug (default: "m5-forecasting-accuracy")
+    - M5_DESTINATION: destination directory (default: "local_data/m5")
+
+    Returns:
+        Destination directory path (string).
+    """
+    competition = settings.M5_COMPETITION or "m5-forecasting-accuracy"
+    destination = Path(settings.M5_DESTINATION or "local_data/m5")
+    destination.mkdir(parents=True, exist_ok=True)
+
     subprocess.run(
         [
             "kaggle",
             "competitions",
             "download",
             "-c",
-            config.dataset_name,
+            competition,
             "-p",
-            config.destination,
+            str(destination),
             "--force",
         ],
         check=True,
+        env=_kaggle_env(),
     )
 
-    # unzip the competition bundle
-    zip_path = Path(config.destination) / f"{config.dataset_name}.zip"
-    with zipfile.ZipFile(zip_path, "r") as z:
-        z.extractall(config.destination)
-    zip_path.unlink(missing_ok=True)
+    zip_path = destination / f"{competition}.zip"
+    if zip_path.exists():
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(destination)
+        zip_path.unlink(missing_ok=True)
 
-    print(f"Competition {config.dataset_name} downloaded to {config.destination}")
-    return config.destination
-
-
+    print(f"Competition {competition} downloaded to {destination}")
+    return str(destination)

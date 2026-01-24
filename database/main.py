@@ -26,8 +26,9 @@ app = FastAPI()
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    dq = db.query(models.DqRun).all()
-    return {"data": "sucessful"}
+    dq = db.query(models.DqRun)
+    print(dq)
+    return {"data": "hello"}
 
 
 @app.get("/")

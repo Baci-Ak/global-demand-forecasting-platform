@@ -34,3 +34,82 @@ Serving (FastAPI), Monitoring + Retraining, AWS deployment (Terraform).
 - `make ps` — show running containers
 - `make logs` — follow logs
 - `make test-mlflow` — end-to-end MLflow smoke test
+
+
+
+
+
+
+
+
+
+
+
+
+┌──────────────┐
+│   Kaggle     │   (external source)
+└──────┬───────┘
+       │
+       ▼
+┌────────────────────────────┐
+│ Ingestion (Python)         │
+│ - kaggle_client.py         │
+│ - m5_ingestion.py          │
+│ - audit_logger.py          │
+└──────┬─────────────────────┘
+       │
+       ▼
+┌────────────────────────────┐
+│ Bronze Layer (MinIO / S3)  │
+│ demand-forecast-bronze     │
+│ source=m5_sales/           │
+│ ingest_date=YYYY-MM-DD/    │
+└──────┬─────────────────────┘
+       │
+       ▼
+┌────────────────────────────┐
+│ Data Quality (DQ)          │
+│ - lake-native              │
+│ - calendar checks          │
+│ - Great Expectations–style │
+└──────┬─────────────────────┘
+       │
+       ▼
+┌────────────────────────────┐
+│ Postgres (Audit DB)        │
+│ audit.ingestion_runs       │
+│ audit.dq_runs              │
+└────────────────────────────┘
+
+
+
+
+
+
+## architecture (clean & correct)
+        Kaggle
+          |
+          v
+   [ Python ingestion ]
+          |
+          v
+   ┌──────────────────┐
+   │  Bronze (S3)     │  ← immutable raw files
+   │  demand-forecast │
+   └──────────────────┘
+          |
+          v
+   [ Python loader ]
+          |
+          v
+   ┌──────────────────┐
+   │ staging.*        │  ← raw tables (db-native)
+   └──────────────────┘
+          |
+          v
+   [ dbt ]
+          |
+          v
+   ┌──────────────────┐
+   │ warehouse.*      │  ← curated analytics layer
+   └──────────────────┘

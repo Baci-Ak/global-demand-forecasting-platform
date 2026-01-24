@@ -46,6 +46,8 @@ class IngestionRun(Base):
     # Optional metadata fields
     s3_path = Column(Text, nullable=True)           # Where the data landed
     row_count = Column(BigInteger, nullable=True)   # Record count produced/loaded
+    # new: number of files successfully uploaded 
+    file_count = Column(Integer, nullable=True)
     schema_version = Column(Text, nullable=True)    # Schema/version marker for the payload
 
     # Operational timestamps

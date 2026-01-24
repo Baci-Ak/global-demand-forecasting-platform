@@ -1,70 +1,88 @@
-import os
-from dataclasses import dataclass
+"""
+S3/MinIO client helpers.
+
+Purpose
+-------
+Provide a thin wrapper around boto3 for interacting with the project's S3-compatible
+object storage (MinIO locally, AWS S3 in deployed environments).
+
+Configuration
+-------------
+All configuration is sourced from `config.config.settings` to keep environment
+handling consistent across the project:
+- MLFLOW_S3_ENDPOINT_URL (MinIO endpoint URL locally)
+- AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- BRONZE_BUCKET
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
 import boto3
 from botocore.config import Config
-from dotenv import load_dotenv
 
-load_dotenv()
-
-
-@dataclass(frozen=True)
-class S3Config:
-    endpoint_url: str
-    access_key_id: str
-    secret_access_key: str
-    bronze_bucket: str
+from config.config import settings
 
 
-def load_s3_config() -> S3Config:
-    endpoint_url = os.getenv("MLFLOW_S3_ENDPOINT_URL")  # reuse for MinIO endpoint
-    access_key_id = os.getenv("AWS_ACCESS_KEY_ID", "")
-    secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY", "")
-    bronze_bucket = os.getenv("BRONZE_BUCKET", "")
+def _require_s3_settings() -> None:
+    """
+    Validate required S3 settings are present.
+    """
+    if not settings.MLFLOW_S3_ENDPOINT_URL:
+        raise RuntimeError(
+            "Missing MLFLOW_S3_ENDPOINT_URL. Set it to your MinIO/S3 endpoint URL."
+        )
 
-    if not endpoint_url:
-        raise RuntimeError("MLFLOW_S3_ENDPOINT_URL is not set in .env (used as MinIO endpoint).")
-    if not access_key_id or not secret_access_key:
-        raise RuntimeError("AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY not set in .env.")
-    if not bronze_bucket:
-        raise RuntimeError("BRONZE_BUCKET not set in .env.")
+    if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
+        raise RuntimeError(
+            "Missing AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3/MinIO access."
+        )
 
-    return S3Config(
-        endpoint_url=endpoint_url,
-        access_key_id=access_key_id,
-        secret_access_key=secret_access_key,
-        bronze_bucket=bronze_bucket,
-    )
+    if not settings.BRONZE_BUCKET:
+        raise RuntimeError("Missing BRONZE_BUCKET.")
 
 
-def get_s3_client(cfg: Optional[S3Config] = None):
-    cfg = cfg or load_s3_config()
+def get_s3_client():
+    """
+    Create and return a boto3 S3 client configured for the current environment.
+    """
+    _require_s3_settings()
 
-    # These settings help with local S3-compatible storage (MinIO)
-    s3 = boto3.client(
+    return boto3.client(
         "s3",
-        endpoint_url=cfg.endpoint_url,
-        aws_access_key_id=cfg.access_key_id,
-        aws_secret_access_key=cfg.secret_access_key,
+        endpoint_url=settings.MLFLOW_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_REGION,
         config=Config(signature_version="s3v4"),
-        region_name="us-east-1",
     )
-    return s3
 
 
-def upload_file_to_bronze(local_path: Path, s3_key: str, cfg: Optional[S3Config] = None) -> str:
+def upload_file_to_bronze(local_path: Path, s3_key: str) -> str:
     """
-    Upload a local file to the Bronze bucket under the given key.
-    Returns the s3:// path.
+    Upload a local file to the Bronze bucket under the provided object key.
+
+    Parameters
+    ----------
+    local_path:
+        Path to a local file on disk.
+    s3_key:
+        Object key inside the bronze bucket (e.g., "m5/raw/calendar.csv").
+
+    Returns
+    -------
+    str
+        An S3 URI of the uploaded object (e.g., "s3://bucket/key").
     """
-    cfg = cfg or load_s3_config()
-    s3 = get_s3_client(cfg)
+    _require_s3_settings()
 
     local_path = Path(local_path)
     if not local_path.exists():
         raise FileNotFoundError(str(local_path))
 
-    s3.upload_file(str(local_path), cfg.bronze_bucket, s3_key)
-    return f"s3://{cfg.bronze_bucket}/{s3_key}"
+    s3 = get_s3_client()
+    s3.upload_file(str(local_path), settings.BRONZE_BUCKET, s3_key)
+
+    return f"s3://{settings.BRONZE_BUCKET}/{s3_key}"

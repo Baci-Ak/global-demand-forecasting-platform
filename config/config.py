@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     MLFLOW_S3_ENDPOINT_URL: str | None = None
+    AWS_REGION: str = Field(default="us-east-1", description="AWS/S3 region for boto3 clients")
+
 
     # -------------------------
     # MLflow
@@ -49,6 +51,27 @@ class Settings(BaseSettings):
     KAGGLE_USERNAME: str | None = None
     M5_COMPETITION: str | None = None
     M5_DESTINATION: str | None = None
+
+    # -------------------------
+    # Ingestion sources
+    # -------------------------
+    M5_SOURCE_NAME: str | None = None
+
+
+    # -------------------------
+    # Warehouse / Staging
+    # -------------------------
+    STAGING_SCHEMA: str = Field(default="staging", description="Schema for warehouse tables")
+    #STAGING_TABLE: str = Field(default="m5_calendar_raw", description="m5_calendar staging raw table for warehouse")
+    #STAGING_TABLE_sell_prices: str = Field(default="m5_sell_prices_raw", description="m5_sell_prices_raw staging raw table for warehouse")
+
+    # -------------------------
+    # Warehouse / Silver
+    # -------------------------
+    SILVER_SCHEMA: str = Field(default="silver", description="Schema for cleaned / typed silver tables")
+
+    
+
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8",case_sensitive=True, extra="ignore",)
 
