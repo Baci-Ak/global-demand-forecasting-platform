@@ -37,6 +37,8 @@ artifacts/
 **/*.tfstate
 **/*.tfstate.*
 **/.terraform.lock.hcl
+infra/terraform/**/terraform.tfvars
+
 
 
 # Secrets
