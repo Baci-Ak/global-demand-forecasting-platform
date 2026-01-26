@@ -1,0 +1,9 @@
+# ============================================================
+# global-demand-forecasting — dbt-only dependencies
+#
+# This file is intentionally separate from requirements.txt
+# because dbt requires protobuf>=6 while mlflow requires protobuf<5.
+# ============================================================
+
+dbt-core==1.11.2
+dbt-postgres==1.10.0
