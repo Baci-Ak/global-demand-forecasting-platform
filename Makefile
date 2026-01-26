@@ -2,10 +2,12 @@
 	db-check db-schema-drop db-upgrade db-downgrade db-revision db-current db-history \
 	api \
 	test-mlflow test-kaggle download-kaggle ingest-m5 \
-	dq-calendar dq-sell-prices dq-sales-train-validation \
+	dq-calendar dq-sell-prices dq-sales-train-validation dq-all \
 	s3-smoke s3-upload s3-list \
-	warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation \
-	dbt-debug dbt-run-silver dbt-test-silver dbt-run-gold dbt-test-gold dbt-docs
+	dbt-debug dbt-init-staging \
+	warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation warehouse-stage-all \
+	dbt-run-silver dbt-test-silver dbt-run-gold dbt-test-gold dbt-docs \
+	warehouse-silver warehouse-gold warehouse-refresh
 
 
 # -----------------------------
@@ -13,49 +15,56 @@
 # -----------------------------
 help:
 	@echo "Common commands:"
-	@echo "  make up                         - start local services (Postgres + MinIO + MLflow)"
-	@echo "  make down                       - stop local services"
-	@echo "  make ps                         - show running containers"
-	@echo "  make logs                       - follow logs"
+	@echo "  make up                          - start local services (Postgres + MinIO + MLflow if enabled)"
+	@echo "  make down                        - stop local services"
+	@echo "  make ps                          - show running containers"
+	@echo "  make logs                        - follow logs"
 	@echo ""
-	@echo "Database / Alembic:"
-	@echo "  make db-check                   - show which DB/host/user you are connected to"
-	@echo "  make db-upgrade                 - apply migrations (alembic upgrade head)"
-	@echo "  make db-downgrade N=-1          - rollback N revisions (default -1)"
-	@echo "  make db-revision MSG=...        - autogenerate a new migration with message"
-	@echo "  make db-current                 - show current revision"
-	@echo "  make db-history                 - show migration history"
-	@echo "  make db-schema-drop             - drop audit schema (DANGEROUS, local dev only)"
+	@echo "Database / Alembic (Audit DB - Postgres):"
+	@echo "  make db-check                    - show which DB/host/user you are connected to"
+	@echo "  make db-upgrade                  - apply migrations (alembic upgrade head)"
+	@echo "  make db-downgrade N=-1           - rollback N revisions (default -1)"
+	@echo "  make db-revision MSG=...         - autogenerate a new migration with message"
+	@echo "  make db-current                  - show current revision"
+	@echo "  make db-history                  - show migration history"
+	@echo "  make db-schema-drop              - drop audit schema (DANGEROUS, local dev only)"
 	@echo ""
 	@echo "S3 / MinIO:"
-	@echo "  make s3-smoke                   - upload a known file and print s3:// path"
-	@echo "  make s3-upload FILE=... KEY=... - upload any local file to bronze bucket"
-	@echo "  make s3-list PREFIX=...         - list objects in bronze (optional PREFIX)"
+	@echo "  make s3-smoke                    - upload a known file and print s3:// path"
+	@echo "  make s3-upload FILE=... KEY=...  - upload any local file to bronze bucket"
+	@echo "  make s3-list PREFIX=...          - list objects in bronze (optional PREFIX)"
 	@echo ""
 	@echo "API:"
-	@echo "  make api                        - run FastAPI (uvicorn)"
+	@echo "  make api                         - run FastAPI (uvicorn)"
 	@echo ""
 	@echo "Pipelines:"
-	@echo "  make test-mlflow                - run MLflow end-to-end smoke test"
-	@echo "  make test-kaggle                - run Kaggle API smoke test"
-	@echo "  make download-kaggle            - download Kaggle dataset to local destination"
-	@echo "  make ingest-m5                  - download M5 dataset + upload to bronze + audit logging"
-	@echo "  make dq-calendar                - data quality for the calendar dataset"
-	@echo "  make dq-sell-prices             - data quality for the sell_prices dataset"
-	@echo "  make dq-sales-train-validation  - data quality for sales_train_validation dataset"
+	@echo "  make test-kaggle                 - run Kaggle API smoke test"
+	@echo "  make download-kaggle             - download Kaggle dataset to local destination"
+	@echo "  make ingest-m5                   - download M5 dataset + upload to Bronze + audit logging"
+	@echo "  make dq-calendar                 - DQ for calendar dataset"
+	@echo "  make dq-sell-prices              - DQ for sell_prices dataset"
+	@echo "  make dq-sales-train-validation   - DQ for sales_train_validation dataset"
+	@echo "  make dq-all                      - run all DQ gates"
 	@echo ""
-	@echo "Warehouse (staging loaders):"
-	@echo "  make warehouse-load-calendar               - load calendar.csv into staging.m5_calendar_raw"
-	@echo "  make warehouse-load-sell-prices            - load sell_prices.csv into staging.m5_sell_prices_raw"
-	@echo "  make warehouse-load-sales-train-validation - load sales_train_validation.csv into staging.m5_sales_train_validation_long_raw"
+	@echo "Warehouse (staging loaders -> Redshift via COPY from S3):"
+	@echo "  make warehouse-load-calendar                - load calendar.csv into staging.m5_calendar_raw"
+	@echo "  make warehouse-load-sell-prices             - load sell_prices.csv into staging.m5_sell_prices_raw"
+	@echo "  make warehouse-load-sales-train-validation  - load sales_train_validation into staging.m5_sales_train_validation_long_raw"
+	@echo "  make warehouse-stage-all                    - run dbt-init-staging + all three staging loaders"
 	@echo ""
 	@echo "Warehouse (dbt):"
-	@echo "  make dbt-debug                  - run dbt debug (from warehouse/)"
-	@echo "  make dbt-run-silver             - build all Silver models"
-	@echo "  make dbt-test-silver            - run tests for all Silver models"
-	@echo "  make dbt-run-gold               - build all Gold models"
-	@echo "  make dbt-test-gold              - run tests for all Gold models"
-	@echo "  make dbt-docs                  - generate dbt documentation"
+	@echo "  make dbt-debug                   - run dbt debug (from warehouse/)"
+	@echo "  make dbt-init-staging            - create/init warehouse staging schema objects (dbt model)"
+	@echo "  make dbt-run-silver              - build all Silver models"
+	@echo "  make dbt-test-silver             - test all Silver models"
+	@echo "  make dbt-run-gold                - build all Gold models"
+	@echo "  make dbt-test-gold               - test all Gold models"
+	@echo "  make dbt-docs                    - generate dbt documentation"
+	@echo ""
+	@echo "Warehouse (canonical flows):"
+	@echo "  make warehouse-silver            - stage-all -> build Silver -> test Silver"
+	@echo "  make warehouse-gold              - warehouse-silver -> build Gold -> test Gold"
+	@echo "  make warehouse-refresh           - ingest -> dq-all -> stage-all -> silver -> gold"
 
 
 # -----------------------------
@@ -162,6 +171,9 @@ dq-sell-prices:
 dq-sales-train-validation:
 	python -m quality.run_sales_train_validation_dq
 
+dq-all: dq-calendar dq-sell-prices dq-sales-train-validation
+	@echo "✅ All DQ gates passed"
+
 
 # -----------------------------
 # Warehouse (staging loaders)
@@ -175,12 +187,18 @@ warehouse-load-sell-prices:
 warehouse-load-sales-train-validation:
 	python -m warehouse.loaders.load_m5_sales_train_validation_to_staging
 
+warehouse-stage-all: dbt-init-staging warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation
+	@echo "✅ Staging ready (calendar, sell_prices, sales_train_validation_long)"
+
 
 # -----------------------------
 # Warehouse (dbt)
 # -----------------------------
 dbt-debug:
 	cd warehouse && dbt debug
+
+dbt-init-staging:
+	cd warehouse && dbt run --select _staging_schema_init
 
 dbt-run-silver:
 	cd warehouse && dbt run --select models/silver
@@ -196,3 +214,16 @@ dbt-test-gold:
 
 dbt-docs:
 	cd warehouse && dbt docs generate
+
+
+# -----------------------------
+# Canonical warehouse flows (these are what CI/CD + Airflow will call)
+# -----------------------------
+warehouse-silver: warehouse-stage-all dbt-run-silver dbt-test-silver
+	@echo "✅ Silver built + tested"
+
+warehouse-gold: warehouse-silver dbt-run-gold dbt-test-gold
+	@echo "✅ Gold built + tested"
+
+warehouse-refresh: ingest-m5 dq-all warehouse-gold
+	@echo "✅ Full refresh complete (ingest -> dq -> stage -> silver -> gold)"

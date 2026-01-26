@@ -30,10 +30,10 @@ def _require_s3_settings() -> None:
     """
     Validate required S3 settings are present.
     """
-    if not settings.MLFLOW_S3_ENDPOINT_URL:
-        raise RuntimeError(
-            "Missing MLFLOW_S3_ENDPOINT_URL. Set it to your MinIO/S3 endpoint URL."
-        )
+    # if not settings.MLFLOW_S3_ENDPOINT_URL:
+    #     raise RuntimeError(
+    #         "Missing MLFLOW_S3_ENDPOINT_URL. Set it to your MinIO/S3 endpoint URL."
+    #     )
 
     if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
         raise RuntimeError(
@@ -49,13 +49,15 @@ def get_s3_client():
     Create and return a boto3 S3 client configured for the current environment.
     """
     _require_s3_settings()
+    endpoint_url = settings.MLFLOW_S3_ENDPOINT_URL or None
 
     return boto3.client(
         "s3",
-        endpoint_url=settings.MLFLOW_S3_ENDPOINT_URL,
+        #endpoint_url=settings.MLFLOW_S3_ENDPOINT_URL,
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         region_name=settings.AWS_REGION,
+        endpoint_url=endpoint_url,
         config=Config(signature_version="s3v4"),
     )
 

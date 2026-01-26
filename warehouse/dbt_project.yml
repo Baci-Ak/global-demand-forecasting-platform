@@ -6,7 +6,8 @@ name: 'warehouse'
 version: '1.0.0'
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'warehouse'
+# profile: 'warehouse'
+profile: 'warehouse_redshift'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -34,6 +35,11 @@ models:
     # Config indicated by + and applies to all files under models/example/
     example:
       +materialized: view
+# staging schema
+    staging:
+      +schema: staging
+      +materialized: view
+
 
     # Silver layer models live in models/silver/
     silver:

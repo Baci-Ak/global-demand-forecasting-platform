@@ -26,7 +26,7 @@ from typing import Any
 import pandas as pd
 
 from config.config import settings
-from database.database import SessionLocal
+from database.database import AuditSessionLocal
 from audit_log.dq_audit_logger import fail_run, pass_run, start_run
 from ingestion.ingestion_queries import get_latest_successful_ingest_date
 from ingestion.bronze_io import build_bronze_key, download_bronze_object_to_tempfile, get_bronze_bucket
@@ -128,7 +128,7 @@ def main() -> None:
     source_name = settings.M5_SOURCE_NAME or "m5_sales"
     bronze_bucket = get_bronze_bucket()
 
-    db = SessionLocal()
+    db = AuditSessionLocal()
     dq_run_id = None
     csv_path: Path | None = None
 

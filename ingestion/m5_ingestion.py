@@ -48,7 +48,7 @@ from datetime import date
 from pathlib import Path
 
 from config.config import settings
-from database.database import SessionLocal
+from database.database import AuditSessionLocal
 from audit_log.ingestion_audit_logger import fail_run, start_run, succeed_run
 from ingestion.kaggle_client import download_dataset
 from ingestion.s3_client import upload_file_to_bronze
@@ -80,7 +80,7 @@ def ingest_m5_to_bronze() -> None:
     staging_dir = Path(settings.M5_DESTINATION or "local_data/m5")
     staging_dir.mkdir(parents=True, exist_ok=True)
 
-    db = SessionLocal()
+    db = AuditSessionLocal()
     run_id = None
 
     try:

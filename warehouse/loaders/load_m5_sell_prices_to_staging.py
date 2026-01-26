@@ -1,95 +1,63 @@
 """
 warehouse.loaders.load_m5_sell_prices_to_staging
 
-Fast staging loader for M5 sell_prices.csv.
+Production-grade staging loader for M5 sell_prices.csv into Redshift using COPY from S3.
 
-Why this version exists
------------------------
-`pandas.to_sql` issues many INSERTs and becomes slow for multi-million row files.
-For production-grade loading into Postgres, use COPY (bulk load).
+- Audit metadata: Postgres (AuditSessionLocal)
+- Data load: Redshift via COPY from S3
+- Schema lifecycle: dbt (no schema creation here)
 
-In AWS/Redshift, the analogous pattern is `COPY` from S3 which is also the
-recommended approach.
-
-Flow
-----
-1) Find latest SUCCEEDED ingest_date for source (audit.ingestion_runs)
-2) Download Bronze sell_prices.csv to a temp file
-3) Ensure staging schema exists
-4) DROP/CREATE staging table (explicit types)
-5) COPY CSV into staging table (fast)
+Staging is raw: keep values as varchar; dbt Silver will type-cast.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sqlalchemy import text
 
 from config.config import settings
-from database.database import engine, SessionLocal
+from database.database import warehouse_engine, AuditSessionLocal
 from ingestion.ingestion_queries import get_latest_successful_ingest_date
-from ingestion.bronze_io import build_bronze_key, download_bronze_object_to_tempfile, get_bronze_bucket
+from ingestion.bronze_io import build_bronze_key, get_bronze_bucket
 from quality.specs.m5_sell_prices import BRONZE_FILENAME
-
 
 STAGING_TABLE = "m5_sell_prices_raw"
 
 
-def _ensure_schema_exists() -> None:
-    schema = settings.STAGING_SCHEMA
-    with engine.begin() as conn:
-        conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema};"))
-
-
 def _recreate_table() -> None:
-    """
-    Recreate the staging table with explicit types for fast COPY.
-    """
-    schema = settings.STAGING_SCHEMA
+    # IMPORTANT: column order must match sell_prices.csv exactly
     ddl = f"""
-    DROP TABLE IF EXISTS {schema}.{STAGING_TABLE};
-    CREATE TABLE {schema}.{STAGING_TABLE} (
-        store_id   text    NOT NULL,
-        item_id    text    NOT NULL,
-        wm_yr_wk   integer NOT NULL,
-        sell_price numeric NOT NULL
+    DROP TABLE IF EXISTS {settings.STAGING_SCHEMA}.{STAGING_TABLE};
+    CREATE TABLE {settings.STAGING_SCHEMA}.{STAGING_TABLE} (
+        store_id    varchar(32),
+        item_id     varchar(64),
+        wm_yr_wk    varchar(32),
+        sell_price  varchar(32)
     );
     """
-    with engine.begin() as conn:
+    with warehouse_engine.begin() as conn:
         conn.execute(text(ddl))
 
 
-def _copy_csv_into_table(csv_path: Path) -> None:
+def _copy_from_s3(s3_path: str) -> None:
+    copy_sql = f"""
+    COPY {settings.STAGING_SCHEMA}.{STAGING_TABLE}
+    FROM '{s3_path}'
+    IAM_ROLE '{settings.REDSHIFT_IAM_ROLE_ARN}'
+    FORMAT AS CSV
+    IGNOREHEADER 1
+    EMPTYASNULL
+    BLANKSASNULL;
     """
-    Use psycopg COPY via SQLAlchemy raw connection.
-
-    This is much faster than INSERT batching.
-    """
-    schema = settings.STAGING_SCHEMA
-
-    raw_conn = engine.raw_connection()
-    try:
-        with raw_conn.cursor() as cur:
-            copy_sql = f"""
-                COPY {schema}.{STAGING_TABLE} (store_id, item_id, wm_yr_wk, sell_price)
-                FROM STDIN WITH (FORMAT csv, HEADER true)
-            """
-            with open(csv_path, "r", encoding="utf-8") as f:
-                cur.copy_expert(copy_sql, f)
-        raw_conn.commit()
-    finally:
-        raw_conn.close()
+    with warehouse_engine.begin() as conn:
+        conn.execute(text(copy_sql))
 
 
 def load_sell_prices_to_staging() -> None:
-    bronze_bucket = get_bronze_bucket()
-    source_name = settings.M5_SOURCE_NAME or "m5_sales"
-
-    db = SessionLocal()
-    tmp_path: Path | None = None
-
+    db = AuditSessionLocal()
     try:
+        source_name = settings.M5_SOURCE_NAME or "m5_sales"
+        bronze_bucket = get_bronze_bucket()
+
         latest_ingest_date = get_latest_successful_ingest_date(db, source_name=source_name)
 
         bronze_key = build_bronze_key(
@@ -98,25 +66,15 @@ def load_sell_prices_to_staging() -> None:
             filename=BRONZE_FILENAME,
         )
 
-        print(f"Latest ingest_date for {source_name} = {latest_ingest_date}")
-        print(f"Downloading s3://{bronze_bucket}/{bronze_key}")
+        s3_path = f"s3://{bronze_bucket}/{bronze_key}"
+        print(f"Loading sell_prices from {s3_path} into Redshift staging")
 
-        tmp_path = download_bronze_object_to_tempfile(bucket=bronze_bucket, key=bronze_key)
-
-        _ensure_schema_exists()
         _recreate_table()
+        _copy_from_s3(s3_path)
 
-        print(f"Bulk loading into {settings.STAGING_SCHEMA}.{STAGING_TABLE} via COPY...")
-        _copy_csv_into_table(tmp_path)
-        print(f"Loaded {settings.STAGING_SCHEMA}.{STAGING_TABLE} successfully.")
-
+        print(f"Loaded {settings.STAGING_SCHEMA}.{STAGING_TABLE} for ingest_date={latest_ingest_date}")
     finally:
         db.close()
-        if tmp_path is not None:
-            try:
-                tmp_path.unlink(missing_ok=True)
-            except Exception:
-                pass
 
 
 if __name__ == "__main__":

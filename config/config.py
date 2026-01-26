@@ -70,6 +70,18 @@ class Settings(BaseSettings):
     # -------------------------
     SILVER_SCHEMA: str = Field(default="silver", description="Schema for cleaned / typed silver tables")
 
+    WAREHOUSE_DSN: str | None = Field(
+    default=None,
+    description="SQLAlchemy connection string for the warehouse (Postgres local or Redshift in AWS). If not set, defaults to POSTGRES_DSN.",
+)
+    # aws redshift i am role ARN
+    REDSHIFT_IAM_ROLE_ARN: str | None = Field(
+    default=None,
+    description="IAM Role ARN used by Redshift COPY/UNLOAD to access S3",
+)
+
+
+
     
 
 
