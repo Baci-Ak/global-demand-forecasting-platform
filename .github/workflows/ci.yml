@@ -34,6 +34,14 @@ jobs:
         uses: actions/checkout@v4
 
       # --------------------------
+      # CI check that prevents committing AWS/Kaggle secrets in .env
+      # --------------------------
+      - name: Secret scan (lightweight)
+        run: |
+          ./scripts/secret_scan.sh
+
+
+      # --------------------------
       # Setup Python runtime
       # --------------------------
       - name: Set up Python
