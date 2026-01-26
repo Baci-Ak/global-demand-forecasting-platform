@@ -13,6 +13,8 @@ __pycache__/
 .venv/
 venv/
 env/
+.venv-dbt/
+venv-dbt/
 *.egg-info/
 dist/
 build/
@@ -58,3 +60,4 @@ database/**/__pycache__/
 config/**/*.pyc
 config/**/__pycache__/
 
+.venv-dbt/
