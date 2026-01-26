@@ -1,0 +1,16 @@
+# CI-only dbt profile (NO REAL CREDENTIALS).
+# This exists so `dbt parse` and `dbt compile` can run in GitHub Actions.
+# These commands do not need a live database connection, but dbt requires a profile file.
+
+warehouse:
+  target: ci
+  outputs:
+    ci:
+      type: postgres
+      host: "localhost"
+      user: "ci"
+      password: "ci"
+      port: 5432
+      dbname: "ci"
+      schema: "public"
+      threads: 1
