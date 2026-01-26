@@ -20,7 +20,7 @@ warehouse_redshift:
   target: ci
   outputs:
     ci:
-      type: redshift
+      type: postgres
       host: "localhost"
       user: "ci"
       password: "ci"
