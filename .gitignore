@@ -32,10 +32,12 @@ local_data/
 artifacts/
 
 # Terraform
-infra/.terraform/
-infra/*.tfstate
-infra/*.tfstate.*
-infra/.terraform.lock.hcl
+# Terraform (ignore state + local caches only)
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform.lock.hcl
+
 
 # Secrets
 .env
