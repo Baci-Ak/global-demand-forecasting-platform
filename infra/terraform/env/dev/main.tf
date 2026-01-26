@@ -42,3 +42,19 @@ module "dev_budget" {
   limit_usd    = var.monthly_budget_limit_usd
   alert_emails = var.budget_alert_emails
 }
+
+
+
+module "github_actions_role" {
+  source = "../../modules/github_oidc_role"
+
+  role_name  = "${var.project_name}-github-actions-${var.environment}"
+  github_org = "Baci-Ak"
+  github_repo = "global-demand-forecasting"
+}
+
+
+output "github_actions_role_arn" {
+  description = "IAM role ARN assumed by GitHub Actions via OIDC (dev)."
+  value       = module.github_actions_role.role_arn
+}
