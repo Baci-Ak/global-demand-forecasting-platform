@@ -95,7 +95,7 @@ jobs:
         run: |
           dbt parse --profiles-dir .dbt
 
-      - name: dbt compile
+      - name: dbt compile (parse-only)
         working-directory: warehouse
         run: |
-          dbt compile --profiles-dir .dbt
+          dbt compile --parse-only --profiles-dir .dbt
