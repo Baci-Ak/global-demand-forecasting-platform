@@ -1,0 +1,101 @@
+# ------------------------------------------------------------------------------
+# CI: Lightweight validation on every PR and on pushes to main/dev
+#
+# What this CI does today:
+# - Installs runtime deps (requirements.txt) to ensure they resolve
+# - Installs dbt deps (requirements-dbt.txt) separately (protobuf-incompatible with mlflow)
+# - Validates dbt project syntax and compilation (no database connection needed)
+#
+# What this CI intentionally does NOT do yet:
+# - Run Python unit tests (we don't have tests/ currently)
+# - Run dbt run/test (those require a live database + credentials)
+# ------------------------------------------------------------------------------
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "dev"]
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Runtime deps: ensure the app environment resolves
+  # ----------------------------------------------------------------------------
+  python-deps:
+    name: Install runtime deps
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------
+      # Checkout repository code
+      # --------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------
+      # Setup Python runtime
+      # --------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # --------------------------
+      # Install runtime dependencies
+      # --------------------------
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+  # ----------------------------------------------------------------------------
+  # dbt: Static project checks (fast, no DB required)
+  # ----------------------------------------------------------------------------
+  dbt-compile:
+    name: dbt parse + compile
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------
+      # Checkout repository code
+      # --------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------
+      # Setup Python runtime
+      # --------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # --------------------------
+      # Install dbt dependencies (separate file)
+      # --------------------------
+      - name: Install dbt dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dbt.txt
+
+      # --------------------------
+      # Install dbt packages (optional)
+      # --------------------------
+      - name: dbt deps (optional)
+        working-directory: warehouse
+        run: |
+          dbt deps || true
+
+      # --------------------------
+      # Parse + compile dbt project
+      # --------------------------
+      - name: dbt parse
+        working-directory: warehouse
+        run: |
+          dbt parse
+
+      - name: dbt compile
+        working-directory: warehouse
+        run: |
+          dbt compile
