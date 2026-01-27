@@ -85,7 +85,7 @@ jobs:
           REDSHIFT_IAM_ROLE_ARN: ${{ secrets.REDSHIFT_IAM_ROLE_ARN }}
 
           # -----------------------------
-          # Kaggle (source ingestion)
+          # Kaggle (source ingestion
           # -----------------------------
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
