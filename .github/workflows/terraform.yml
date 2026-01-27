@@ -1,21 +1,42 @@
 # ------------------------------------------------------------------------------
-# Terraform workflow (CD foundation)
+# Terraform (IaC) Workflow
 #
-# Purpose:
-# - On PRs: run terraform fmt/validate + generate a plan (no apply)
-# - On main/dev pushes: (apply will be added later after we set up secure AWS auth)
+# Purpose
+# - Pull Requests:
+#     - Format check (terraform fmt)
+#     - Validate configuration (terraform validate)
+#     - Generate a plan for dev (terraform plan)
+# - Pushes to dev:
+#     - Same checks as PRs
+#     - Apply changes automatically to the dev environment (terraform apply)
 #
-# Security:
-# - This workflow does NOT apply changes yet.
-# - We will add OIDC-based AWS authentication before any apply step.
+# Why this exists
+# - We manage AWS infrastructure with Terraform (production-grade IaC).
+# - GitHub Actions uses AWS OIDC to obtain short-lived credentials (no long-lived keys).
+#
+# Security model
+# - Authentication: GitHub OIDC -> AWS IAM Role (least privilege)
+# - Apply is restricted to the dev branch only.
+# - PRs never apply changes.
+#
+# Remote state
+# - Terraform uses an S3 backend with DynamoDB locking configured in:
+#     infra/terraform/env/dev/main.tf
 # ------------------------------------------------------------------------------
 
 name: terraform
 
 on:
+  # ---------------------------------------------------------------------------
+  # PRs: run checks + plan for any Terraform changes
+  # ---------------------------------------------------------------------------
   pull_request:
     paths:
       - "infra/terraform/**"
+
+  # ---------------------------------------------------------------------------
+  # Pushes: run checks on dev/main; apply only on dev
+  # ---------------------------------------------------------------------------
   push:
     branches: ["main", "dev"]
     paths:
@@ -23,56 +44,83 @@ on:
 
 permissions:
   contents: read
+  id-token: write # Required for GitHub OIDC -> AWS (configure-aws-credentials)
 
 jobs:
-  plan:
-    name: terraform plan (no apply)
+  terraform-dev:
+    name: terraform (dev) fmt + validate + plan (+ apply on dev push)
     runs-on: ubuntu-latest
 
     steps:
+      # -----------------------------------------------------------------------
+      # 1) Checkout repo
+      # -----------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
+      # -----------------------------------------------------------------------
+      # 2) Install Terraform CLI
+      # -----------------------------------------------------------------------
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.6"
 
-      - name: Terraform fmt (check)
-        working-directory: infra/terraform
-        run: |
-          terraform fmt -check -recursive
-
-      - name: Terraform init (remote backend)
-        working-directory: infra/terraform/env/dev
-        run: |
-          terraform init
-
-      - name: Terraform validate
-        working-directory: infra/terraform/env/dev
-        run: |
-          terraform validate
-
-      # Enable Terraform plan in GitHub Actions using OIDC (no no secrets)
+      # -----------------------------------------------------------------------
+      # 3) Authenticate to AWS using GitHub OIDC (NO static AWS keys)
+      #
+      # IMPORTANT:
+      # - This must run BEFORE "terraform init" because the S3 backend needs AWS
+      #   credentials to read/write remote state and acquire DynamoDB locks.
+      # -----------------------------------------------------------------------
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::798329741238:role/global-demand-forecasting-github-actions-dev
           aws-region: us-east-1
 
-      # Run Terraform plan (dev)
+      # -----------------------------------------------------------------------
+      # 4) Formatting check (fail fast if formatting is off)
+      # -----------------------------------------------------------------------
+      - name: Terraform fmt (check)
+        working-directory: infra/terraform
+        run: |
+          terraform fmt -check -recursive
+
+      # -----------------------------------------------------------------------
+      # 5) Initialize Terraform with remote backend (S3 + DynamoDB lock)
+      # -----------------------------------------------------------------------
+      - name: Terraform init (remote backend)
+        working-directory: infra/terraform/env/dev
+        run: |
+          terraform init
+
+      # -----------------------------------------------------------------------
+      # 6) Validate Terraform configuration
+      # -----------------------------------------------------------------------
+      - name: Terraform validate
+        working-directory: infra/terraform/env/dev
+        run: |
+          terraform validate
+
+      # -----------------------------------------------------------------------
+      # 7) Generate plan for dev environment (always safe)
+      # -----------------------------------------------------------------------
       - name: Terraform plan (dev)
         working-directory: infra/terraform/env/dev
         run: |
           terraform plan -var-file=terraform.tfvars
 
-        #Enab Terraform apply on pushes to dev
+      # -----------------------------------------------------------------------
+      # 8) Apply changes ONLY on pushes to dev branch
+      #
+      # Why:
+      # - dev is our integration environment.
+      # - PRs should never apply changes.
+      # - main can later be wired to prod with manual approvals.
+      # -----------------------------------------------------------------------
       - name: Terraform apply (dev)
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         working-directory: infra/terraform/env/dev
         run: |
           terraform apply -auto-approve -var-file=terraform.tfvars
-
-
-
-
