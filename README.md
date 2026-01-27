@@ -122,4 +122,3 @@ Serving (FastAPI), Monitoring + Retraining, AWS deployment (Terraform).
 
 
 
-#do not keep secrets in .env for production. .env is fine locally, but CI/CD must use GitHub #Secrets or AWS Secrets Manager/SSM. Otherwise you’ll leak creds again.

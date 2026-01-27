@@ -224,7 +224,7 @@ dbt-docs:
 
 
 # -----------------------------
-# Canonical warehouse flows (these are what CI/CD + Airflow will cal)
+# Canonical warehouse flows (these are what CI/CD + Airflow will call)
 # -----------------------------
 warehouse-silver: warehouse-stage-all dbt-run-silver dbt-test-silver
 	@echo "✅ Silver built + tested"
