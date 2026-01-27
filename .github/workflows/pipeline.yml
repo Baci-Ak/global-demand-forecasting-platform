@@ -17,9 +17,9 @@
 # - This workflow DOES NOT read .env.
 # - It receives configuration from GitHub Secrets (repo settings).
 #
-# IMPORTANT NOTE (current state)
-# - If POSTGRES_DSN points to localhost, this workflow will fail in GitHub Actions.
-# - We will move the audit DB to RDS so the runner can reach it.
+# Critical production detail
+# - The audit DB (Postgres) must have its schema/tables created before ingestion.
+# - We run Alembic migrations (`alembic upgrade head`) at the start of the job.
 # ------------------------------------------------------------------------------
 
 name: pipeline
@@ -61,14 +61,29 @@ jobs:
           pip install -r requirements-dbt.txt
 
       # -----------------------------------------------------------------------
-      # 4) Run the canonical pipeline entrypoint
+      # 4) Ensure audit schema/tables exist (RDS) via Alembic
+      #
+      # Why:
+      # - A fresh RDS instance has no `audit.*` tables.
+      # - Ingestion/DQ writes to audit tables, so migrations must run first.
+      # -----------------------------------------------------------------------
+      - name: Migrate audit DB (alembic upgrade head)
+        env:
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+          AUDIT_SCHEMA: ${{ secrets.AUDIT_SCHEMA }}
+        run: |
+          alembic upgrade head
+
+      # -----------------------------------------------------------------------
+      # 5) Run the canonical pipeline entrypoint
       # -----------------------------------------------------------------------
       - name: Run warehouse refresh
         env:
           # -----------------------------
-          # Audit DB (currently local -> will move to RDS)
+          # Audit DB (Postgres RDS)
           # -----------------------------
           POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+          AUDIT_SCHEMA: ${{ secrets.AUDIT_SCHEMA }}
 
           # -----------------------------
           # AWS (S3 + boto3)
@@ -85,13 +100,12 @@ jobs:
           REDSHIFT_IAM_ROLE_ARN: ${{ secrets.REDSHIFT_IAM_ROLE_ARN }}
 
           # -----------------------------
-          # Kaggle (source ingestion
+          # Kaggle (source ingestion)
           # -----------------------------
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
           M5_COMPETITION: ${{ secrets.M5_COMPETITION }}
           M5_SOURCE_NAME: ${{ secrets.M5_SOURCE_NAME }}
           M5_DESTINATION: ${{ secrets.M5_DESTINATION }}
-
         run: |
           make warehouse-refresh
