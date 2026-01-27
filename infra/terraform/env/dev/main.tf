@@ -12,12 +12,12 @@
 */
 
 #terraform {
-  # Backend configuration will be added once we decide remote state (S3 + DynamoDB).
-  # For now, local state is acceptable for bootstrapping.
+# Backend configuration will be added once we decide remote state (S3 + DynamoDB).
+# For now, local state is acceptable for bootstrapping.
 #}
 
 terraform {
-    # Backend configuration for remote state (S3 + DynamoDB).
+  # Backend configuration for remote state (S3 + DynamoDB).
   backend "s3" {
     bucket         = "global-demand-forecasting-tfstate-dev"
     key            = "env/dev/terraform.tfstate"
