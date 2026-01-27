@@ -48,8 +48,8 @@ module "dev_budget" {
 module "github_actions_role" {
   source = "../../modules/github_oidc_role"
 
-  role_name  = "${var.project_name}-github-actions-${var.environment}"
-  github_org = "Baci-Ak"
+  role_name   = "${var.project_name}-github-actions-${var.environment}"
+  github_org  = "Baci-Ak"
   github_repo = "global-demand-forecasting"
 }
 
