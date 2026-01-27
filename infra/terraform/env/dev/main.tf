@@ -11,11 +11,21 @@
   - Add modules for S3 bronze bucket, IAM, and cost guardrails (Budgets).
 */
 
-terraform {
+#terraform {
   # Backend configuration will be added once we decide remote state (S3 + DynamoDB).
   # For now, local state is acceptable for bootstrapping.
-}
+#}
 
+terraform {
+    # Backend configuration for remote state (S3 + DynamoDB).
+  backend "s3" {
+    bucket         = "global-demand-forecasting-tfstate-dev"
+    key            = "env/dev/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "global-demand-forecasting-tflock-dev"
+    encrypt        = true
+  }
+}
 
 
 
