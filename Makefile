@@ -13,15 +13,7 @@
 
 
 
-# -----------------------------
-# dbt configuration
-#
-# Purpose:
-# - Allow dbt to run both locally and in CI.
-# - Locally, dbt typically uses ~/.dbt.
-# - In CI, we generate a repo-local profiles.yml (e.g., .dbt/profiles.yml).
-# -----------------------------
-DBT_PROFILES_DIR ?= $(HOME)/.dbt
+
 
 
 
@@ -210,25 +202,25 @@ warehouse-stage-all: dbt-init-staging warehouse-load-calendar warehouse-load-sel
 # Warehouse (dbt)
 # -----------------------------
 dbt-debug:
-	cd warehouse && dbt debug --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt debug --profiles-dir .dbt
 
 dbt-init-staging:
-	cd warehouse && dbt run --select _staging_schema_init --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt run --select _staging_schema_init --profiles-dir .dbt
 
 dbt-run-silver:
-	cd warehouse && dbt run --select models/silver --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt run --select models/silver --profiles-dir .dbt
 
 dbt-test-silver:
-	cd warehouse && dbt test --select models/silver --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt test --select models/silver --profiles-dir .dbt
 
 dbt-run-gold:
-	cd warehouse && dbt run --select models/gold --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt run --select models/gold --profiles-dir .dbt
 
 dbt-test-gold:
-	cd warehouse && dbt test --select models/gold --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt test --select models/gold --profiles-dir .dbt
 
 dbt-docs:
-	cd warehouse && dbt docs generate --profiles-dir $(DBT_PROFILES_DIR)
+	cd warehouse && dbt docs generate --profiles-dir .dbt
 
 
 # -----------------------------

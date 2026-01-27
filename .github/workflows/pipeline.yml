@@ -17,9 +17,14 @@
 # - This workflow DOES NOT read .env.
 # - It receives configuration from GitHub Secrets (repo settings).
 #
+# dbt profile strategy (clean + reproducible)
+# - We do NOT rely on ~/.dbt/profiles.yml in CI.
+# - We commit a repo-owned profile at: warehouse/.dbt/profiles.yml
+# - That profile reads connection values from environment variables.
+#
 # Critical production detail
 # - The audit DB (Postgres) must have its schema/tables created before ingestion.
-# - We run Alembic migrations (`alembic upgrade head`) at the start of the job.
+# - We run Alembic migrations via `make db-upgrade` at the start of the job.
 # ------------------------------------------------------------------------------
 
 name: pipeline
@@ -38,13 +43,13 @@ jobs:
 
     steps:
       # -----------------------------------------------------------------------
-      # Checkout repository
+      # 1) Checkout repository
       # -----------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # Set up Python runtime
+      # 2) Set up Python runtime
       # -----------------------------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -52,7 +57,7 @@ jobs:
           python-version: "3.11"
 
       # -----------------------------------------------------------------------
-      # Install dependencies
+      # 3) Install dependencies
       # -----------------------------------------------------------------------
       - name: Install dependencies
         run: |
@@ -61,49 +66,11 @@ jobs:
           pip install -r requirements-dbt.txt
 
       # -----------------------------------------------------------------------
-      # Generate dbt profiles.yml for CI
+      # 4) Ensure audit schema/tables exist (RDS)
       #
       # Why:
-      # - GitHub runners do not have ~/.dbt/profiles.yml
-      # - We create a minimal profile in-repo and point dbt to it via Makefile:
-      #     DBT_PROFILES_DIR=.dbt
-      #
-      # Requirement:
-      # - The following GitHub Secrets must exist:
-      #     REDSHIFT_HOST, REDSHIFT_USER, REDSHIFT_PASSWORD,
-      #     REDSHIFT_PORT, REDSHIFT_DBNAME, STAGING_SCHEMA
-      # -----------------------------------------------------------------------
-      - name: Write dbt profiles.yml (CI)
-        env:
-          REDSHIFT_HOST: ${{ secrets.REDSHIFT_HOST }}
-          REDSHIFT_USER: ${{ secrets.REDSHIFT_USER }}
-          REDSHIFT_PASSWORD: ${{ secrets.REDSHIFT_PASSWORD }}
-          REDSHIFT_PORT: ${{ secrets.REDSHIFT_PORT }}
-          REDSHIFT_DBNAME: ${{ secrets.REDSHIFT_DBNAME }}
-          STAGING_SCHEMA: ${{ secrets.STAGING_SCHEMA }}
-        run: |
-          mkdir -p .dbt
-          cat > .dbt/profiles.yml << EOF
-          warehouse_redshift:
-            target: ci
-            outputs:
-              ci:
-                type: redshift
-                host: ${REDSHIFT_HOST}
-                user: ${REDSHIFT_USER}
-                password: ${REDSHIFT_PASSWORD}
-                port: ${REDSHIFT_PORT}
-                dbname: ${REDSHIFT_DBNAME}
-                schema: ${STAGING_SCHEMA}
-                threads: 4
-                sslmode: require
-          EOF
-
-      # -----------------------------------------------------------------------
-      # Ensure audit schema/tables exist (RDS) via Make target
-      #
-      # Why:
-      # - Ingestion/DQ writess to audit tables; migrations must run first.
+      # - Ingestion/DQ writes audit records.
+      # - A fresh RDS instance has no audit schema/tables until migrations run.
       # -----------------------------------------------------------------------
       - name: Migrate audit DB (make db-upgrade)
         env:
@@ -113,7 +80,7 @@ jobs:
           make db-upgrade
 
       # -----------------------------------------------------------------------
-      #  Run the canonical pipeline entrypoint
+      # 5) Run the canonical pipeline entrypoint
       # -----------------------------------------------------------------------
       - name: Run warehouse refresh
         env:
@@ -147,8 +114,15 @@ jobs:
           M5_DESTINATION: ${{ secrets.M5_DESTINATION }}
 
           # -----------------------------
-          # dbt (CI profile location)
+          # dbt (values consumed by warehouse/.dbt/profiles.yml)
           # -----------------------------
-          DBT_PROFILES_DIR: .dbt
+          DBT_TARGET: ci
+
+          REDSHIFT_HOST: ${{ secrets.REDSHIFT_HOST }}
+          REDSHIFT_USER: ${{ secrets.REDSHIFT_USER }}
+          REDSHIFT_PASSWORD: ${{ secrets.REDSHIFT_PASSWORD }}
+          REDSHIFT_PORT: ${{ secrets.REDSHIFT_PORT }}
+          REDSHIFT_DBNAME: ${{ secrets.REDSHIFT_DBNAME }}
+          STAGING_SCHEMA: ${{ secrets.STAGING_SCHEMA }}
         run: |
           make warehouse-refresh
