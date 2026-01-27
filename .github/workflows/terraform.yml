@@ -114,7 +114,7 @@ jobs:
       # -----------------------------------------------------------------------
       # 8) Apply changes ONLY on pushes to dev branch
       #
-      # Why:
+      # Why::
       # - dev is our integration environment.
       # - PRs should never apply changes.
       # - main can later be wired to prod with manual approvals.
