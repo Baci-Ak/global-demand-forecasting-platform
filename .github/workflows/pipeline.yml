@@ -38,13 +38,13 @@ jobs:
 
     steps:
       # -----------------------------------------------------------------------
-      # 1) Checkout repository
+      # Checkout repository
       # -----------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # 2) Set up Python runtime
+      # Set up Python runtime
       # -----------------------------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -52,7 +52,7 @@ jobs:
           python-version: "3.11"
 
       # -----------------------------------------------------------------------
-      # 3) Install dependencies
+      # Install dependencies
       # -----------------------------------------------------------------------
       - name: Install dependencies
         run: |
@@ -61,21 +61,59 @@ jobs:
           pip install -r requirements-dbt.txt
 
       # -----------------------------------------------------------------------
-      # 4) Ensure audit schema/tables exist (RDS) via Alembic
+      # Generate dbt profiles.yml for CI
       #
       # Why:
-      # - A fresh RDS instance has no `audit.*` tables.
-      # - Ingestion/DQ writes to audit tables, so migrations must run first..
+      # - GitHub runners do not have ~/.dbt/profiles.yml
+      # - We create a minimal profile in-repo and point dbt to it via Makefile:
+      #     DBT_PROFILES_DIR=.dbt
+      #
+      # Requirement:
+      # - The following GitHub Secrets must exist:
+      #     REDSHIFT_HOST, REDSHIFT_USER, REDSHIFT_PASSWORD,
+      #     REDSHIFT_PORT, REDSHIFT_DBNAME, STAGING_SCHEMA
       # -----------------------------------------------------------------------
-      - name: Migrate audit DB (alembic upgrade head)
+      - name: Write dbt profiles.yml (CI)
+        env:
+          REDSHIFT_HOST: ${{ secrets.REDSHIFT_HOST }}
+          REDSHIFT_USER: ${{ secrets.REDSHIFT_USER }}
+          REDSHIFT_PASSWORD: ${{ secrets.REDSHIFT_PASSWORD }}
+          REDSHIFT_PORT: ${{ secrets.REDSHIFT_PORT }}
+          REDSHIFT_DBNAME: ${{ secrets.REDSHIFT_DBNAME }}
+          STAGING_SCHEMA: ${{ secrets.STAGING_SCHEMA }}
+        run: |
+          mkdir -p .dbt
+          cat > .dbt/profiles.yml << EOF
+          warehouse_redshift:
+            target: ci
+            outputs:
+              ci:
+                type: redshift
+                host: ${REDSHIFT_HOST}
+                user: ${REDSHIFT_USER}
+                password: ${REDSHIFT_PASSWORD}
+                port: ${REDSHIFT_PORT}
+                dbname: ${REDSHIFT_DBNAME}
+                schema: ${STAGING_SCHEMA}
+                threads: 4
+                sslmode: require
+          EOF
+
+      # -----------------------------------------------------------------------
+      # Ensure audit schema/tables exist (RDS) via Make target
+      #
+      # Why:
+      # - Ingestion/DQ writes to audit tables; migrations must run first.
+      # -----------------------------------------------------------------------
+      - name: Migrate audit DB (make db-upgrade)
         env:
           POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
           AUDIT_SCHEMA: ${{ secrets.AUDIT_SCHEMA }}
         run: |
-          alembic upgrade head
+          make db-upgrade
 
       # -----------------------------------------------------------------------
-      # 5) Run the canonical pipeline entrypoint
+      #  Run the canonical pipeline entrypoint
       # -----------------------------------------------------------------------
       - name: Run warehouse refresh
         env:
@@ -107,5 +145,10 @@ jobs:
           M5_COMPETITION: ${{ secrets.M5_COMPETITION }}
           M5_SOURCE_NAME: ${{ secrets.M5_SOURCE_NAME }}
           M5_DESTINATION: ${{ secrets.M5_DESTINATION }}
+
+          # -----------------------------
+          # dbt (CI profile location)
+          # -----------------------------
+          DBT_PROFILES_DIR: .dbt
         run: |
           make warehouse-refresh

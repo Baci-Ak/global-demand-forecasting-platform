@@ -87,6 +87,33 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dbt.txt
 
+
+      # -----------------------------------------------------------------------
+      # Create a minimal dbt profile for parsing only.
+      #
+      # Important:
+      # - dbt parse needs a profile to exist, but does not need a live DB.
+      # - We use a dummy local Postgres profile to satisfy dbt's requirement.
+      # -----------------------------------------------------------------------
+      - name: Write dbt profiles.yml (parse-only)
+        run: |
+          mkdir -p .dbt
+          cat > .dbt/profiles.yml << 'EOF'
+          warehouse_redshift:
+            target: ci
+            outputs:
+              ci:
+                type: postgres
+                host: localhost
+                user: dummy
+                password: dummy
+                port: 5432
+                dbname: dummy
+                schema: dummy
+                threads: 1
+          EOF
+
+
       # --------------------------
       # Install dbt packages (optional)
       # --------------------------
@@ -101,7 +128,7 @@ jobs:
       - name: dbt parse
         working-directory: warehouse
         run: |
-          dbt parse --profiles-dir .dbt
+          dbt parse --profiles-dir ../.dbt
 
       # - name: dbt compile (parse-only)
       #   working-directory: warehouse
