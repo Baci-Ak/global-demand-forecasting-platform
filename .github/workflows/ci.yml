@@ -114,7 +114,7 @@ jobs:
       # - dbt parse does NOT need a live database connection.
       # - We point dbt at the repo-owned profile directory.
       #
-      # Dummy env vars are provided only to satisfy env_var(...) cals.
+      # Dummy env vars are provided only to satisfy env_var(...) calls.
       # --------------------------
       - name: dbt parse
         working-directory: warehouse
