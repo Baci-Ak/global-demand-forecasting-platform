@@ -43,17 +43,36 @@ jobs:
         run: |
           terraform fmt -check -recursive
 
-      - name: Terraform init (no backend)
+      - name: Terraform init (remote backend)
         working-directory: infra/terraform/env/dev
         run: |
-          terraform init -backend=false
+          terraform init
 
       - name: Terraform validate
         working-directory: infra/terraform/env/dev
         run: |
           terraform validate
 
-      # Plan step will be enabled once AWS auth is configured via GitHub OIDC.
-      - name: Terraform plan (disabled until OIDC auth is added)
+      # Enable Terraform plan in GitHub Actions using OIDC (no no secrets)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::798329741238:role/global-demand-forecasting-github-actions-dev
+          aws-region: us-east-1
+
+      # Run Terraform plan (dev)
+      - name: Terraform plan (dev)
+        working-directory: infra/terraform/env/dev
         run: |
-          echo "Plan is disabled until we add secure AWS auth (GitHub OIDC)."
+          terraform plan -var-file=terraform.tfvars
+
+        #Enab Terraform apply on pushes to dev
+      - name: Terraform apply (dev)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        working-directory: infra/terraform/env/dev
+        run: |
+          terraform apply -auto-approve -var-file=terraform.tfvars
+
+
+
+
