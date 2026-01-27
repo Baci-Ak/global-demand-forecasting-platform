@@ -37,7 +37,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('dq_run_id'),
     schema=AUDIT_SCHEMA
     )
-    op.create_index('idx_dq_runs_dataset_time', 'dq_runs', ['dataset_name', sa.literal_column('started_at DESC')], unique=False, schema='audit_testing')
+    op.create_index('idx_dq_runs_dataset_time', 'dq_runs', ['dataset_name', sa.literal_column('started_at DESC')], unique=False, schema=AUDIT_SCHEMA)
     op.create_table('ingestion_runs',
     sa.Column('run_id', sa.UUID(), nullable=False),
     sa.Column('source_name', sa.Text(), nullable=False),
@@ -53,7 +53,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('run_id'),
     schema=AUDIT_SCHEMA
     )
-    op.create_index('idx_ingestion_runs_source_date', 'ingestion_runs', ['source_name', 'ingest_date'], unique=False, schema='audit_testing')
+    op.create_index('idx_ingestion_runs_source_date', 'ingestion_runs', ['source_name', 'ingest_date'], unique=False, schema=AUDIT_SCHEMA)
     # ### end Alembic commands ###
 
 
