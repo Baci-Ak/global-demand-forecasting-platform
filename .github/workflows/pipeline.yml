@@ -103,7 +103,7 @@ jobs:
       # Ensure audit schema/tables exist (RDS) via Make target
       #
       # Why:
-      # - Ingestion/DQ writes to audit tables; migrations must run first.
+      # - Ingestion/DQ writess to audit tables; migrations must run first.
       # -----------------------------------------------------------------------
       - name: Migrate audit DB (make db-upgrade)
         env:
