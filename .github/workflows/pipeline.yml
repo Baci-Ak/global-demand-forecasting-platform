@@ -1,20 +1,25 @@
 # ------------------------------------------------------------------------------
-# Pipeline Workflow (No Terraform)
+# CD / Pipeline Workflow (No Terraform)
 #
-# Purpose
-# - Run the end-to-end data pipeline automatically on pushes to dev:
+# What this workflow is
+# - This is the "CD" side of CI/CD for the data platform:
+#   it runs the end-to-end pipeline in a clean GitHub runner.
+#
+# When it runs
+# - On pushes to the `dev` branch.
+#
+# What it runs
+# - `make warehouse-refresh`
+#   which executes:
 #     ingest -> dq -> stage -> silver -> gold
 #
-# Why this is production-style (even without IaC)
-# - Uses a single canonical entrypoint: `make warehouse-refresh`
-# - Secrets are NOT read from .env in CI (we'll inject via GitHub Secrets)
-# - Runs in a clean, ephemeral runner
+# Secrets / Configuration
+# - This workflow DOES NOT read .env.
+# - It receives configuration from GitHub Secrets (repo settings).
 #
-# Notes
-# - This workflow assumes AWS resources already exist (S3 bucket, Redshift, IAM).
-# - Next steps will:
-#     1) Add GitHub Secrets and wire them into env vars
-#     2) Remove reliance on local temp files for ingestion (streaming/S3 upload)
+# IMPORTANT NOTE (current state)
+# - If POSTGRES_DSN points to localhost, this workflow will fail in GitHub Actions.
+# - We will move the audit DB to RDS so the runner can reach it.
 # ------------------------------------------------------------------------------
 
 name: pipeline
@@ -33,13 +38,13 @@ jobs:
 
     steps:
       # -----------------------------------------------------------------------
-      # 1) Checkout code
+      # 1) Checkout repository
       # -----------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # 2) Python setup
+      # 2) Set up Python runtime
       # -----------------------------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -56,11 +61,37 @@ jobs:
           pip install -r requirements-dbt.txt
 
       # -----------------------------------------------------------------------
-      # 4) Run pipeline
-      #
-      # IMPORTANT:
-      # - We will provide env vars via GitHub Secrets in the next step.
+      # 4) Run the canonical pipeline entrypoint
       # -----------------------------------------------------------------------
       - name: Run warehouse refresh
+        env:
+          # -----------------------------
+          # Audit DB (currently local -> will move to RDS)
+          # -----------------------------
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+
+          # -----------------------------
+          # AWS (S3 + boto3)
+          # -----------------------------
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BRONZE_BUCKET: ${{ secrets.BRONZE_BUCKET }}
+
+          # -----------------------------
+          # Warehouse (Redshift)
+          # -----------------------------
+          WAREHOUSE_DSN: ${{ secrets.WAREHOUSE_DSN }}
+          REDSHIFT_IAM_ROLE_ARN: ${{ secrets.REDSHIFT_IAM_ROLE_ARN }}
+
+          # -----------------------------
+          # Kaggle (source ingestion)
+          # -----------------------------
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          M5_COMPETITION: ${{ secrets.M5_COMPETITION }}
+          M5_SOURCE_NAME: ${{ secrets.M5_SOURCE_NAME }}
+          M5_DESTINATION: ${{ secrets.M5_DESTINATION }}
+
         run: |
           make warehouse-refresh
