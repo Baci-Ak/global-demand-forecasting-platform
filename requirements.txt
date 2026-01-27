@@ -52,6 +52,6 @@ great_expectations==1.11.0
 # dbt (warehouse)
 #
 # Pin the adapter only. It pulls a compatible dbt-core.
-# Latest dbt-postgres is 1.10.0 as of Dec 22, 2025.
+# Latest dbt-postgres is 1.10.0
 # ----------------------------
 dbt-postgres==1.10.0
