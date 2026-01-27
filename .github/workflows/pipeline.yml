@@ -65,7 +65,7 @@ jobs:
       #
       # Why:
       # - A fresh RDS instance has no `audit.*` tables.
-      # - Ingestion/DQ writes to audit tables, so migrations must run first.
+      # - Ingestion/DQ writes to audit tables, so migrations must run first..
       # -----------------------------------------------------------------------
       - name: Migrate audit DB (alembic upgrade head)
         env:
