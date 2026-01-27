@@ -22,7 +22,7 @@ python-dotenv==1.0.1
 SQLAlchemy==2.0.45
 psycopg2-binary==2.9.11
 alembic==1.18.1
-
+sqlalchemy-redshift
 # ----------------------------
 # kaggle data package
 # ----------------------------
