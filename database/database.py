@@ -19,7 +19,6 @@ warehouse_dsn = settings.WAREHOUSE_DSN or settings.POSTGRES_DSN
 warehouse_engine = create_engine(warehouse_dsn)
 
 
-
 # -------------------------------------------------------------------
 # Sessions
 # -------------------------------------------------------------------

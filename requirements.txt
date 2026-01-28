@@ -19,7 +19,7 @@ python-dotenv==1.0.1
 # ----------------------------
 # Database / migrations
 # ----------------------------
-SQLAlchemy==1.4.54
+SQLAlchemy
 psycopg2-binary==2.9.11
 alembic==1.18.1
 sqlalchemy-redshift==0.8.14
