@@ -1,4 +1,16 @@
 
+# -----------------------------
+# Local env loading
+# - Loads .env automatically for local development.
+# - CI/CD already injects env vars, so this only applies when .env exists.
+# -----------------------------
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
+
+
 .PHONY: help up down ps logs \
 	db-check db-schema-drop db-upgrade db-downgrade db-revision db-current db-history \
 	api \

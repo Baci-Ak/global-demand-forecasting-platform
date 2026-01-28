@@ -39,3 +39,16 @@ warehouse_redshift:
       schema: "{{ env_var('STAGING_SCHEMA', 'staging') }}"
       threads: 2
       sslmode: require
+
+
+    prod:
+      type: redshift
+      host: "{{ env_var('REDSHIFT_HOST') }}"
+      user: "{{ env_var('REDSHIFT_USER') }}"
+      password: "{{ env_var('REDSHIFT_PASSWORD') }}"
+      port: "{{ env_var('REDSHIFT_PORT', '5439') | int }}"
+      dbname: "{{ env_var('REDSHIFT_DBNAME', 'gdf_warehouse') }}"
+      schema: "{{ env_var('STAGING_SCHEMA', 'staging') }}"
+      threads: "{{ env_var('DBT_THREADS', '8') | int }}"
+      sslmode: require
+

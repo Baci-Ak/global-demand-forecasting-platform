@@ -59,7 +59,7 @@ def start_run(db: Session, source_name: str, ingest_date: date,
 
 
 def succeed_run(db: Session, run_id: UUID, s3_path: str, row_count: int | None = None,
-                file_count: int | None = None,) -> None:
+                file_count: int | None = None, total_bytes: int | None = None,) -> None:
     """
     Mark an ingestion run as SUCCEEDED.
     """
@@ -71,6 +71,7 @@ def succeed_run(db: Session, run_id: UUID, s3_path: str, row_count: int | None =
     row.s3_path = s3_path
     row.row_count = row_count
     row.file_count = file_count
+    row.total_bytes = total_bytes
     row.error_message = None
     row.ended_at = _utcnow()
 

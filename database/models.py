@@ -48,6 +48,9 @@ class IngestionRun(Base):
     row_count = Column(BigInteger, nullable=True)   # Record count produced/loaded
     # new: number of files successfully uploaded 
     file_count = Column(Integer, nullable=True)
+    # new: total bytes uploaded to bronze for this run (cheap ingest metric)
+    total_bytes = Column(BigInteger, nullable=True)
+
     schema_version = Column(Text, nullable=True)    # Schema/version marker for the payload
 
     # Operational timestamps

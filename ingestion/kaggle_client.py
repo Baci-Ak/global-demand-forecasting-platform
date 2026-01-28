@@ -9,12 +9,15 @@ This module wraps the Kaggle CLI to:
 from __future__ import annotations
 
 import os
+import io
 import subprocess
 import zipfile
 from pathlib import Path
 from typing import Dict
+import tempfile
 
 from config.config import settings
+from ingestion.s3_client import upload_fileobj_to_bronze
 
 
 def _require_kaggle_credentials() -> None:
@@ -100,3 +103,41 @@ def download_dataset() -> str:
 
     print(f"Competition {competition} downloaded to {destination}")
     return str(destination)
+
+
+
+
+def download_competition_zip_to_bronze(*, s3_key: str) -> str:
+    """
+    Download the Kaggle competition ZIP to an ephemeral temp directory and upload to Bronze.
+
+    This avoids any persistent local staging like `local_data/m5` while staying compatible
+    with the Kaggle CLI (which is not reliably stdout-streamable for competitions).
+    """
+    competition = settings.M5_COMPETITION or "m5-forecasting-accuracy"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        subprocess.run(
+            [
+                "kaggle",
+                "competitions",
+                "download",
+                "-c",
+                competition,
+                "-p",
+                str(tmpdir_path),
+                "--force",
+            ],
+            check=True,
+            env=_kaggle_env(),
+        )
+
+        zip_path = tmpdir_path / f"{competition}.zip"
+        if not zip_path.exists():
+            raise RuntimeError(f"Expected Kaggle zip not found at: {zip_path}")
+
+        # Upload the zip to Bronze using streaming fileobj
+        with zip_path.open("rb") as f:
+            return upload_fileobj_to_bronze(f, s3_key)

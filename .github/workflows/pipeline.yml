@@ -116,7 +116,7 @@ jobs:
           # -----------------------------
           # dbt (values consumed by warehouse/.dbt/profiles.yml)
           # -----------------------------
-          DBT_TARGET: ci
+          DBT_TARGET: dev
           REDSHIFT_HOST: ${{ secrets.REDSHIFT_HOST }}
           REDSHIFT_USER: ${{ secrets.REDSHIFT_USER }}
           REDSHIFT_PASSWORD: ${{ secrets.REDSHIFT_PASSWORD }}

@@ -88,3 +88,32 @@ def upload_file_to_bronze(local_path: Path, s3_key: str) -> str:
     s3.upload_file(str(local_path), settings.BRONZE_BUCKET, s3_key)
 
     return f"s3://{settings.BRONZE_BUCKET}/{s3_key}"
+
+
+
+
+def upload_fileobj_to_bronze(fileobj, s3_key: str) -> str:
+    """
+    Upload a file-like object (stream) to the Bronze bucket under the provided object key.
+
+    This is production-friendly for large payloads where writing to local disk is undesirable.
+
+    Parameters
+    ----------
+    fileobj:
+        A file-like object opened in binary mode.
+    s3_key:
+        Object key inside the bronze bucket.
+
+    Returns
+    -------
+    str
+        An S3 URI of the uploaded object (e.g., "s3://bucket/key").
+    """
+    _require_s3_settings()
+
+    s3 = get_s3_client()
+    s3.upload_fileobj(fileobj, settings.BRONZE_BUCKET, s3_key)
+
+    return f"s3://{settings.BRONZE_BUCKET}/{s3_key}"
+
