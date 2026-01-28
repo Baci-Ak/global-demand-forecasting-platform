@@ -1,7 +1,10 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+import sqlalchemy_redshift  # noqa: F401
+
 from config.config import settings
+
 
 # -------------------------------------------------------------------
 # Engines
