@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-import sqlalchemy_redshift  # noqa: F401
-from sqlalchemy.engine import make_url
+#import sqlalchemy_redshift  # noqa: F401
+#from sqlalchemy.engine import make_url
 
 
 from config.config import settings
@@ -16,24 +16,8 @@ audit_engine = create_engine(settings.POSTGRES_DSN)
 
 # Warehouse DB can be Postgres (local) or Redshift (AWS)
 warehouse_dsn = settings.WAREHOUSE_DSN or settings.POSTGRES_DSN
-
-# CI safety: if the DSN points to a Redshift endpoint but uses a Postgres scheme,
-# SQLAlchemy will run Postgres-only startup commands (e.g., SHOW standard_conforming_strings).
-# Normalize to the Redshift dialect in that case.
-u = make_url(warehouse_dsn)
-host = (u.host or "").lower()
-
-looks_like_redshift = (
-    "redshift" in host
-    or "redshift-serverless" in host
-    or host.endswith(".amazonaws.com")
-)
-
-if u.drivername.startswith("postgresql") and looks_like_redshift:
-    u = u.set(drivername="redshift+psycopg2")
-    warehouse_dsn = str(u)
-
 warehouse_engine = create_engine(warehouse_dsn)
+
 
 
 # -------------------------------------------------------------------

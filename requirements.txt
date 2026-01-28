@@ -19,10 +19,10 @@ python-dotenv==1.0.1
 # ----------------------------
 # Database / migrations
 # ----------------------------
-SQLAlchemy==2.0.45
+SQLAlchemy==1.4.54
 psycopg2-binary==2.9.11
 alembic==1.18.1
-sqlalchemy-redshift
+sqlalchemy-redshift==0.8.14
 # ----------------------------
 # kaggle data packages
 # ----------------------------
