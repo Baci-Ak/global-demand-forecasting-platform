@@ -88,23 +88,22 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        #create alembic schema if not exist.
-        connection.exec_driver_sql(f'CREATE SCHEMA IF NOT EXISTS "{AUDIT_SCHEMA}"')
-        connection.commit()
-
         context.configure(
-            connection=connection, target_metadata=target_metadata,
+            connection=connection,
+            target_metadata=target_metadata,
             include_schemas=True,
             include_object=include_object,
             version_table="audit_alembic_version",
             version_table_schema=AUDIT_SCHEMA,
-
             compare_type=True,
-            compare_server_default=True
-            )
+            compare_server_default=True,
+        )
 
         with context.begin_transaction():
+            # create audit schema if not exists 
+            context.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{AUDIT_SCHEMA}"'))
             context.run_migrations()
+
 
 
 if context.is_offline_mode():
