@@ -65,3 +65,15 @@ config/**/*.pyc
 config/**/__pycache__/
 
 .venv-dbt/
+
+
+
+
+
+
+
+# ==============================================================================
+# Airflow (local dev runtime)
+# ==============================================================================
+orchestration/airflow/.env
+orchestration/airflow/logs/

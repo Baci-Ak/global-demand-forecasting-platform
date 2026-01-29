@@ -28,11 +28,15 @@
 # ------------------------------------------------------------------------------
 
 name: pipeline
+# if wants to use the ci/cd for deployment to the aws platform
+#-------------
+# on:
+#   push:
+#     branches: ["dev"]
 
 on:
-  push:
-    branches: ["dev"]
-
+  workflow_dispatch:
+    #--------------------
 permissions:
   contents: read
 

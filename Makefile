@@ -20,7 +20,9 @@ endif
 	dbt-debug dbt-init-staging \
 	warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation warehouse-stage-all \
 	dbt-run-silver dbt-test-silver dbt-run-gold dbt-test-gold dbt-docs \
-	warehouse-silver warehouse-gold warehouse-refresh
+	warehouse-silver warehouse-gold warehouse-refresh \
+	airflow-up airflow-down airflow-ps airflow-logs airflow-reset
+
 
 
 
@@ -86,6 +88,16 @@ help:
 	@echo "  make warehouse-refresh           - ingest -> dq-all -> stage-all -> silver -> gold"
 
 
+	@echo ""
+	@echo "Orchestration (Airflow):"
+	@echo "  make airflow-up                  - start Airflow stack (dedicated metadata Postgres)"
+	@echo "  make airflow-down                - stop Airflow stack"
+	@echo "  make airflow-ps                  - show Airflow containers"
+	@echo "  make airflow-logs                - follow Airflow logs"
+	@echo "  make airflow-reset               - wipe Airflow volumes (DANGEROUS: resets metadata DB)"
+
+
+
 # -----------------------------
 # Docker
 # -----------------------------
@@ -100,6 +112,37 @@ ps:
 
 logs:
 	docker compose logs -f --tail=200
+
+
+
+
+# ==============================================================================
+# Orchestration (Airflow) - Local-first, Production-shaped
+# ------------------------------------------------------------------------------
+
+# ==============================================================================
+
+AIRFLOW_COMPOSE_FILE := docker-compose.airflow.yml
+AIRFLOW_COMPOSE_PROJECT := gdf_airflow
+
+airflow-up:
+	docker compose -p $(AIRFLOW_COMPOSE_PROJECT) -f $(AIRFLOW_COMPOSE_FILE) up -d
+
+airflow-down:
+	docker compose -p $(AIRFLOW_COMPOSE_PROJECT) -f $(AIRFLOW_COMPOSE_FILE) down
+
+airflow-ps:
+	docker compose -p $(AIRFLOW_COMPOSE_PROJECT) -f $(AIRFLOW_COMPOSE_FILE) ps
+
+airflow-logs:
+	docker compose -p $(AIRFLOW_COMPOSE_PROJECT) -f $(AIRFLOW_COMPOSE_FILE) logs -f --tail=200
+
+airflow-reset:
+	# DANGEROUS: wipes Airflow metadata DB volume (local dev only)
+	docker compose -p $(AIRFLOW_COMPOSE_PROJECT) -f $(AIRFLOW_COMPOSE_FILE) down -v
+
+
+
 
 
 # -----------------------------
