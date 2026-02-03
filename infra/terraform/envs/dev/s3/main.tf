@@ -13,15 +13,26 @@
 
 locals {
   bronze = {
-    name            = "${var.project_name}-${var.environment}-bronze"
+    name              = "${var.project_name}-${var.environment}-bronze"
     enable_versioning = true
     force_destroy     = var.s3_force_destroy
-    sse_algorithm = var.s3_sse_algorithm
+    sse_algorithm     = var.s3_sse_algorithm
     tags = {
       data_zone = "bronze"
     }
   }
+
+  artifacts = {
+    name              = "${var.project_name}-${var.environment}-artifacts"
+    enable_versioning = true
+    force_destroy     = var.s3_force_destroy
+    sse_algorithm     = var.s3_sse_algorithm
+    tags = {
+      data_zone = "artifacts"
+    }
+  }
 }
+
 
 module "bronze_bucket" {
   source = "../../../modules/s3"
@@ -34,3 +45,13 @@ module "bronze_bucket" {
 }
 
 
+
+module "artifacts_bucket" {
+  source = "../../../modules/s3"
+
+  bucket_name       = local.artifacts.name
+  enable_versioning = local.artifacts.enable_versioning
+  force_destroy     = local.artifacts.force_destroy
+  sse_algorithm     = local.artifacts.sse_algorithm
+  tags              = local.artifacts.tags
+}
