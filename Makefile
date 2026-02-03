@@ -205,8 +205,8 @@ for o in resp.get('Contents', []): \
 # -----------------------------
 # API
 # -----------------------------
-api:
-	uvicorn database.main:app --reload
+# api:
+# 	uvicorn database.main:app --reload
 
 
 # -----------------------------
@@ -289,3 +289,7 @@ warehouse-gold: warehouse-silver dbt-run-gold dbt-test-gold
 
 warehouse-refresh: ingest-m5 dq-all warehouse-gold
 	@echo "✅ Full refresh complete (ingest -> dq -> stage -> silver -> gold)"
+
+
+
+
