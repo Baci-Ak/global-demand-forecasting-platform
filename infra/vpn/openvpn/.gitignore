@@ -1,0 +1,29 @@
+# ==============================================================================
+# OpenVPN PKI – Git Ignore Rules
+# ==============================================================================
+#
+# Purpose
+# - Prevent private keys and sensitive cryptographic material from being
+#   committed to version control.
+# - Allow public certificates required for infrastructure provisioning.
+#
+# NEVER commit:
+# - Private keys
+# - TLS auth keys
+# - CSR / EasyRSA working files
+# ==============================================================================
+
+# --- Private key material (NEVER commit) ---
+pki/private/
+pki/reqs/
+pki/inline/
+pki/ta.key
+pki/index.txt*
+pki/serial*
+pki/*.old
+pki/*.bak
+
+# --- Allow public / safe material ---
+!pki/ca.crt
+!pki/issued/
+!pki/dh.pem
