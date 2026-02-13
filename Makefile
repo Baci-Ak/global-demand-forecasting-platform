@@ -293,3 +293,12 @@ warehouse-refresh: ingest-m5 dq-all warehouse-gold
 
 
 
+# -----------------------------
+# AWS helpers
+# -----------------------------
+aws-azs:
+	@aws ec2 describe-availability-zones \
+	  --region $${AWS_REGION:-us-east-1} \
+	  --query "AvailabilityZones[?State=='available'].ZoneName" \
+	  --output text
+

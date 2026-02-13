@@ -3,15 +3,20 @@
 # ==============================================================================
 #
 # Purpose
-# - Expose key attributes of the S3 bucket for consumption by other stacks.
+# - Expose identifiers needed by other stacks (IAM, MWAA, Redshift, apps).
 # ==============================================================================
 
 output "bucket_name" {
-  description = "Name of the created S3 bucket."
+  description = "S3 bucket name."
   value       = aws_s3_bucket.this.bucket
 }
 
 output "bucket_arn" {
-  description = "ARN of the created S3 bucket."
+  description = "S3 bucket ARN."
   value       = aws_s3_bucket.this.arn
+}
+
+output "bucket_id" {
+  description = "S3 bucket ID."
+  value       = aws_s3_bucket.this.id
 }

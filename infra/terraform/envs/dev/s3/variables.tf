@@ -1,10 +1,10 @@
 # ==============================================================================
-# envs/dev/_global/variables.tf
+# envs/dev/s3/variables.tf
 # ==============================================================================
 #
 # Purpose
-# - Environment-wide variables shared across all dev stacks.
-# - Values are set via terraform.tfvars or CI/CD, not hardcoded in modules.
+# - Inputs for the dev S3 stack.
+# - Values are set via terraform.tfvars (no secrets).
 # ==============================================================================
 
 variable "project_name" {
@@ -24,6 +24,17 @@ variable "aws_region" {
   type        = string
 }
 
+variable "enable_versioning" {
+  description = "Whether to enable S3 bucket versioning for the dev bronze bucket."
+  type        = bool
+  default     = true
+}
+
+variable "s3_bucket_tags" {
+  description = "Additional tags to apply to the dev bronze bucket."
+  type        = map(string)
+  default     = {}
+}
 
 variable "s3_sse_algorithm" {
   description = "Default server-side encryption algorithm for dev S3 buckets. AES256 (SSE-S3) or aws:kms (SSE-KMS)."
@@ -36,10 +47,8 @@ variable "s3_sse_algorithm" {
   }
 }
 
-
-
 variable "s3_force_destroy" {
   description = "Whether Terraform may delete objects when destroying dev buckets. Use with care."
   type        = bool
-  default     = false
+  default     = true
 }

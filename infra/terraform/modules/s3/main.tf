@@ -3,68 +3,76 @@
 # ==============================================================================
 #
 # Purpose
-# - Reusable S3 module for data platform storage buckets.
-# - Enforces baseline security and governance controls by default.
+# - Provision a single S3 bucket with production-grade defaults:
+#   - Block all public access
+#   - Enable default server-side encryption
+#   - Enable versioning (optional)
+#   - Enforce bucket ownership controls
 #
 # Notes
-# - This module is environment-agnostic. Environment-specific naming and inputs
-#   are provided by the calling root module (envs/*/*).
+# - This module intentionally does not define bucket policies.
+#   Access should be granted via IAM roles/policies in separate stacks/modules
+#   following least privilege.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# S3 bucket (base)
+# S3 bucket
 # ------------------------------------------------------------------------------
-
 resource "aws_s3_bucket" "this" {
   bucket        = var.bucket_name
   force_destroy = var.force_destroy
 
-  tags = var.tags
+  tags = merge(
+    {
+      project     = var.project_name
+      environment = var.environment
+      component   = "s3"
+      name        = var.bucket_name
+    },
+    var.tags
+  )
 }
 
 # ------------------------------------------------------------------------------
-# Security: block all public access
+# Ownership controls (recommended baseline)
 # ------------------------------------------------------------------------------
-
-resource "aws_s3_bucket_public_access_block" "this" {
-  bucket = aws_s3_bucket.this.id
-
-  block_public_acls       = true
-  ignore_public_acls      = true
-  block_public_policy     = true
-  restrict_public_buckets = true
-}
-
-# ------------------------------------------------------------------------------
-# Security: enforce bucket owner ownership (recommended default)
-# ------------------------------------------------------------------------------
-
 resource "aws_s3_bucket_ownership_controls" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
-    object_ownership = "BucketOwnerEnforced"
+    object_ownership = "BucketOwnerPreferred"
   }
 }
 
 # ------------------------------------------------------------------------------
-# Security: server-side encryption by default (SSE-S3)
+# Block all public access (defense in depth)
 # ------------------------------------------------------------------------------
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket = aws_s3_bucket.this.id
 
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ------------------------------------------------------------------------------
+# Default server-side encryption
+# ------------------------------------------------------------------------------
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = var.sse_algorithm
+      sse_algorithm     = var.sse_algorithm
+      kms_master_key_id = var.sse_algorithm == "aws:kms" ? var.kms_key_arn : null
     }
   }
 }
 
 # ------------------------------------------------------------------------------
-# Data protection: versioning
+# Versioning
 # ------------------------------------------------------------------------------
-
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.this.id
 
@@ -72,4 +80,3 @@ resource "aws_s3_bucket_versioning" "this" {
     status = var.enable_versioning ? "Enabled" : "Suspended"
   }
 }
-

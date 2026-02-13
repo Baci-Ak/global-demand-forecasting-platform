@@ -77,3 +77,13 @@ config/**/__pycache__/
 # ==============================================================================
 orchestration/airflow/.env
 orchestration/airflow/logs/
+
+
+
+# ------------------------------------------------------------------------------
+# VPN PKI (EasyRSA)
+# - Keep PKI workspace local; never commit private keys or generated material.
+# - We will commit ONLY public artifacts explicitly when needed.
+# ------------------------------------------------------------------------------
+infra/vpn/pki/**
+!infra/vpn/pki/README.md

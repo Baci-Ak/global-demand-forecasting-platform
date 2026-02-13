@@ -3,28 +3,27 @@
 # ==============================================================================
 #
 # Purpose
-# - Root module outputs for the dev S3 stack.
-# - Re-exposes key module outputs for humans and for other automation.
+# - Expose stack-level outputs for integration with other stacks.
+# - These outputs are typically consumed via terraform_remote_state or CI/CD.
 # ==============================================================================
 
 output "bronze_bucket_name" {
-  description = "Name of the dev bronze S3 bucket."
+  description = "Name of the dev bronze bucket."
   value       = module.bronze_bucket.bucket_name
 }
 
 output "bronze_bucket_arn" {
-  description = "ARN of the dev bronze S3 bucket."
+  description = "ARN of the dev bronze bucket."
   value       = module.bronze_bucket.bucket_arn
 }
 
-
-
-output "artifacts_bucket_name" {
-  description = "Name of the dev artifacts S3 bucket."
-  value       = module.artifacts_bucket.bucket_name
+output "bronze_bucket_id" {
+  description = "ID of the dev bronze bucket."
+  value       = module.bronze_bucket.bucket_id
 }
 
-output "artifacts_bucket_arn" {
-  description = "ARN of the dev artifacts S3 bucket."
-  value       = module.artifacts_bucket.bucket_arn
+
+output "iam_terraform_execution_role_arn" {
+  description = "IAM stack terraform execution role ARN (from remote state)."
+  value       = data.terraform_remote_state.iam.outputs.terraform_execution_role_arn
 }
