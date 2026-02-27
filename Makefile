@@ -95,6 +95,11 @@ help:
 	@echo "  make airflow-ps                  - show Airflow containers"
 	@echo "  make airflow-logs                - follow Airflow logs"
 	@echo "  make airflow-reset               - wipe Airflow volumes (DANGEROUS: resets metadata DB)"
+	
+	@echo "AWS SSM tunnels (private resources via jumphost):"
+	@echo "  make tunnel-mwaa-ui                - Tunnel to MWAA private UI"
+	@echo "  make tunnel-rds-audit              - Tunnel to RDS Postgres (audit DB)"
+	@echo "  make tunnel-redshift               - Tunnel to Redshift endpoint"
 
 
 
@@ -179,6 +184,25 @@ with e.begin() as c: c.execute(text(f'DROP SCHEMA IF EXISTS \"{schema}\" CASCADE
 print(f'Dropped schema: {schema}')"
 
 
+
+
+# -----------------------------
+# MWAA / RDS: migrate audit DB (production-shaped)
+# - Pulls POSTGRES_DSN from AWS Secrets Manager (same secret MWAA uses)
+# - Runs Alembic upgrades against RDS (creates audit schema/tables)
+# -----------------------------
+POSTGRES_DSN_SECRET_ID ?= gdf/dev/postgres_dsn
+AWS_REGION ?= us-east-1
+
+.PHONY: aws-db-upgrade
+aws-db-upgrade:
+	@echo "Running Alembic migrations against RDS using secret: $(POSTGRES_DSN_SECRET_ID) (region: $(AWS_REGION))"
+	@export POSTGRES_DSN="$$(aws secretsmanager get-secret-value \
+	  --region $(AWS_REGION) \
+	  --secret-id $(POSTGRES_DSN_SECRET_ID) \
+	  --query SecretString \
+	  --output text)"; \
+	alembic upgrade head
 # -----------------------------
 # S3 / MinIO
 # -----------------------------
@@ -302,3 +326,181 @@ aws-azs:
 	  --query "AvailabilityZones[?State=='available'].ZoneName" \
 	  --output text
 
+
+
+
+
+# ==============================================================================
+# MWAA (artifact packaging + upload)
+# - These targets DO NOT modify the MWAA environment.
+# - They only build/upload artifacts into the MWAA source bucket paths.
+# - MWAA environment updates happen only when Terraform changes the s3_path pointers.
+# ==============================================================================
+
+#MWAA_DAG_BUCKET ?= gdf-dev-bronze
+
+# MWAA_DAG_BUCKET ?= gdf-dev-bronze
+MWAA_DAG_BUCKET ?= gdf-dev-airflow
+MWAA_DAG_PREFIX ?= airflow/dags
+MWAA_REQ_PREFIX ?= airflow/requirements
+MWAA_PLUGINS_PREFIX ?= airflow/plugins
+MWAA_STARTUP_PREFIX ?= airflow/startup
+
+MWAA_PLUGINS_ZIP := .build/plugins.zip
+
+.PHONY: mwaa-build-plugins mwaa-upload-dags mwaa-upload-requirements mwaa-upload-plugins mwaa-upload-startup mwaa-upload-all
+
+mwaa-build-plugins:
+	@mkdir -p .build
+	@rm -f $(MWAA_PLUGINS_ZIP)
+	@cd orchestration/airflow/plugins && zip -r ../../..//$(MWAA_PLUGINS_ZIP) . \
+	  -x "*.pyc" -x "__pycache__/*" -x ".DS_Store" -x "**/.DS_Store"
+	@echo "✅ Built: $(MWAA_PLUGINS_ZIP)"
+
+mwaa-upload-dags:
+	aws s3 sync orchestration/airflow/dags s3://$(MWAA_DAG_BUCKET)/$(MWAA_DAG_PREFIX) --delete \
+	  --exclude "__pycache__/*" \
+	  --exclude "**/__pycache__/*" \
+	  --exclude "*.pyc" \
+	  --exclude ".DS_Store" \
+	  --exclude "**/.DS_Store"
+	@echo "✅ Uploaded DAGs -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_DAG_PREFIX)"
+
+mwaa-upload-requirements:
+	aws s3 cp docker/airflow/requirements-mwaa.txt s3://$(MWAA_DAG_BUCKET)/$(MWAA_REQ_PREFIX)/requirements.txt
+	@echo "✅ Uploaded requirements -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_REQ_PREFIX)/requirements.txt"
+
+mwaa-upload-plugins: mwaa-build-plugins
+	aws s3 cp $(MWAA_PLUGINS_ZIP) s3://$(MWAA_DAG_BUCKET)/$(MWAA_PLUGINS_PREFIX)/plugins.zip
+	@echo "✅ Uploaded plugins.zip -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_PLUGINS_PREFIX)/plugins.zip"
+
+
+mwaa-upload-startup:
+	aws s3 cp orchestration/airflow/startup/startup.sh s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/startup.sh
+	aws s3 cp orchestration/airflow/startup/gdf_runtime.conf s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/gdf_runtime.conf
+	@echo "✅ Uploaded startup artifacts -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/"
+
+
+mwaa-upload-all: mwaa-upload-dags mwaa-upload-requirements mwaa-upload-plugins mwaa-upload-startup
+	@echo "✅ All MWAA artifacts uploaded"
+
+
+
+# ------------------------------------------------------------------------------
+# MWAA: Build + upload application wheel
+# - Builds a clean wheel from the repo root.
+# - Uploads it to the MWAA source bucket under airflow/packages/.
+# - Does NOT modify the MWAA environment by itself (Terraform still points to the key).
+# ------------------------------------------------------------------------------
+
+MWAA_WHEEL_PREFIX ?= airflow/packages
+
+.PHONY: mwaa-build-wheel mwaa-upload-wheel
+
+mwaa-build-wheel:
+	@rm -rf dist build *.egg-info
+	@python -m build --wheel
+	@echo "✅ Built wheel(s):"
+	@ls -1 dist/*.whl
+
+# Usage:
+#   make mwaa-upload-wheel WHEEL=dist/gdf-0.1.0-py3-none-any.whl
+mwaa-upload-wheel:
+	@test -n "$(WHEEL)" || (echo "ERROR: set WHEEL=dist/<wheel-file>.whl" && exit 1)
+	@aws s3 cp $(WHEEL) s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/$$(basename $(WHEEL))
+	@echo "✅ Uploaded wheel -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/$$(basename $(WHEEL))"
+
+
+
+
+# ------------------------------------------------------------------------------
+# MWAA: Upload Alembic migrations (audit DB schema)
+# - MWAA tasks need the audit schema/tables in RDS Postgres.
+# - The startup script runs `alembic upgrade head` using these files.
+# ------------------------------------------------------------------------------
+
+MWAA_ALEMBIC_PREFIX ?= airflow/startup/alembic
+
+.PHONY: mwaa-upload-alembic
+
+mwaa-upload-alembic:
+	aws s3 cp alembic.ini s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic.ini
+	aws s3 sync alembic s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic \
+	  --delete \
+	  --exclude "__pycache__/*" \
+	  --exclude "*.pyc" \
+	  --exclude ".DS_Store"
+	@echo "✅ Uploaded Alembic -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/"
+
+
+
+
+
+.PHONY: pkg-install
+pkg-install:
+	python -m pip install --upgrade pip
+	python -m pip install -e .
+	python -c "import ingestion, quality, warehouse, warehouse.loaders, database, audit_log, app_config; print('OK: gdf package imports')"
+
+
+
+.PHONY: mwaa-bundle
+mwaa-bundle:
+	@rm -rf .build/mwaa
+	@mkdir -p .build/mwaa
+	@rsync -a --delete \
+		--exclude="__pycache__/" \
+		--exclude="*.pyc" \
+		--exclude="*.pyo" \
+		--exclude=".DS_Store" \
+		--exclude="*.egg-info/" \
+		--exclude=".pytest_cache/" \
+		--exclude=".ruff_cache/" \
+		--exclude=".mypy_cache/" \
+		--exclude=".venv*/" \
+		--exclude="warehouse/target/" \
+		--exclude="warehouse/logs/" \
+		pyproject.toml README.md requirements-mwaa.txt \
+		gdf ingestion quality warehouse database audit_log app_config \
+		orchestration/airflow/dags \
+		orchestration/airflow/include \
+		orchestration/airflow/plugins \
+		.build/mwaa/
+
+	@cp requirements-mwaa.txt .build/mwaa/requirements.txt
+	@cd .build/mwaa && zip -r ../mwaa-bundle.zip .
+	@echo "Wrote .build/mwaa-bundle.zip"
+
+
+
+
+# ------------------------------------------------------------------------------
+# AWS: SSM tunnels to private resources via jumphost
+# - Uses existing scripts in infra/terraform/bin/
+# - Requires: AWS CLI + SSM permissions + .env with ENVIRONMENT and AWS_REGION
+# - Each tunnel forwards a different service (MWAA UI, RDS Audit Postgres, Redshift)
+# - Keep the terminal open while using the tunnel
+# Usage examples:
+#   make tunnel-mwaa-ui
+#   make tunnel-rds-audit
+#   make tunnel-redshift
+# ------------------------------------------------------------------------------
+
+.PHONY: tunnel-mwaa-ui tunnel-rds-audit tunnel-redshift
+
+tunnel-mwaa-ui:
+	@chmod +x infra/terraform/bin/tunnel_mwaa_ui.sh
+	@infra/terraform/bin/tunnel_mwaa_ui.sh
+
+tunnel-rds-audit:
+	@chmod +x infra/terraform/bin/tunnel_rds_audit.sh
+	@infra/terraform/bin/tunnel_rds_audit.sh
+
+tunnel-redshift:
+	@chmod +x infra/terraform/bin/tunnel_redshift.sh
+	@infra/terraform/bin/tunnel_redshift.sh
+
+
+
+
+# terraform apply -replace=module.mwaa.aws_mwaa_environment.this

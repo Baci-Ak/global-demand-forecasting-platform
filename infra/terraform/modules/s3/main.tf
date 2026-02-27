@@ -80,3 +80,54 @@ resource "aws_s3_bucket_versioning" "this" {
     status = var.enable_versioning ? "Enabled" : "Suspended"
   }
 }
+
+
+
+
+# ------------------------------------------------------------------------------
+# Lifecycle configuration (retention + storage class transitions)
+# ------------------------------------------------------------------------------
+resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  count  = var.enable_lifecycle ? 1 : 0
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    id     = "cost-control"
+    status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.lifecycle_abort_multipart_days
+    }
+
+    dynamic "transition" {
+      for_each = var.lifecycle_transition_ia_days == null ? [] : [1]
+      content {
+        days          = var.lifecycle_transition_ia_days
+        storage_class = "STANDARD_IA"
+      }
+    }
+
+    dynamic "transition" {
+      for_each = var.lifecycle_transition_glacier_days == null ? [] : [1]
+      content {
+        days          = var.lifecycle_transition_glacier_days
+        storage_class = "GLACIER"
+      }
+    }
+
+    dynamic "expiration" {
+      for_each = var.lifecycle_expire_days == null ? [] : [1]
+      content {
+        days = var.lifecycle_expire_days
+      }
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.lifecycle_noncurrent_expire_days
+    }
+  }
+}

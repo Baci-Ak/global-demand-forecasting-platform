@@ -20,6 +20,9 @@ data "terraform_remote_state" "network" {
   }
 }
 
+
+
+
 data "terraform_remote_state" "ssm_jumphost" {
   backend = "s3"
 
@@ -32,6 +35,22 @@ data "terraform_remote_state" "ssm_jumphost" {
   }
 }
 
+
+data "terraform_remote_state" "s3" {
+  backend = "s3"
+
+  config = {
+    bucket       = "gdf-dev-tfstate-f6df28"
+    key          = "envs/dev/s3/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+
+
+
+
 module "mwaa" {
   source = "../../../modules/mwaa"
 
@@ -42,8 +61,8 @@ module "mwaa" {
   environment_class = var.environment_class
   min_workers       = var.min_workers
   max_workers       = var.max_workers
-  
-  
+
+
   cloudwatch_log_retention_days = var.cloudwatch_log_retention_days
 
 
@@ -72,6 +91,21 @@ module "mwaa" {
   plugins_s3_path        = var.plugins_s3_path
   startup_script_s3_path = var.startup_script_s3_path
 
+
+  requirements_s3_object_version   = var.requirements_s3_path == null ? null : data.aws_s3_object.requirements[0].version_id
+  plugins_s3_object_version        = var.plugins_s3_path == null ? null : data.aws_s3_object.plugins[0].version_id
+  startup_script_s3_object_version = var.startup_script_s3_path == null ? null : data.aws_s3_object.startup[0].version_id
+
   airflow_configuration_options = var.airflow_configuration_options
+
+  data_bucket_names = [
+  data.terraform_remote_state.s3.outputs.bronze_bucket_name
+]
+ 
+
+
+
   logging_configuration         = var.logging_configuration
+
+  #alerts_sns_topic_arn = aws_sns_topic.mwaa_alerts.arn
 }

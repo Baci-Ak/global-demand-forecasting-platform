@@ -73,4 +73,10 @@ module "rds_postgres" {
   trusted_source_sg_id  = data.terraform_remote_state.ssm_jumphost.outputs.jumphost_security_group_id
 
 
+  # Allow MWAA (via the shared workloads SG) to reach Postgres privately.
+  additional_trusted_source_sg_ids = [
+    data.terraform_remote_state.network.outputs.workloads_security_group_id
+  ]
+
+
 }

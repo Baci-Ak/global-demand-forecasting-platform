@@ -6,7 +6,7 @@ Create Date: 2026-01-21 16:53:23.644285
 
 """
 from typing import Sequence, Union
-from config.config import settings
+from app_config.config import settings
 
 
 from alembic import op

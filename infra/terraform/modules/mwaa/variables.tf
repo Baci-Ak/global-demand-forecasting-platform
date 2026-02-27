@@ -185,3 +185,35 @@ variable "cloudwatch_log_retention_days" {
 }
 
 
+
+
+
+variable "requirements_s3_object_version" {
+  description = "S3 VersionId for requirements.txt (required by MWAA when requirements_s3_path is set)."
+  type        = string
+  default     = null
+}
+
+variable "plugins_s3_object_version" {
+  description = "S3 VersionId for plugins.zip (required by MWAA when plugins_s3_path is set)."
+  type        = string
+  default     = null
+}
+
+variable "startup_script_s3_object_version" {
+  description = "S3 VersionId for startup script (required by MWAA when startup_script_s3_path is set)."
+  type        = string
+  default     = null
+}
+
+
+
+
+
+
+
+variable "data_bucket_names" {
+  description = "Project data buckets (e.g., bronze) that MWAA tasks may read/write."
+  type        = list(string)
+  default     = []
+}

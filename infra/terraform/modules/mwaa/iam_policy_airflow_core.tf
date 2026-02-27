@@ -61,6 +61,33 @@ resource "aws_iam_role_policy" "mwaa_airflow_core" {
         ]
       },
 
+      # ------------------------------------------------------------------------
+      # S3: read/write data buckets (bronze, artifacts, etc.)
+      # - decoupled from MWAA source bucket
+      # ------------------------------------------------------------------------
+      {
+        Sid    = "S3ReadWriteDataBucketsObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject*",
+          "s3:PutObject",
+          "s3:AbortMultipartUpload",
+          "s3:ListMultipartUploadParts",
+          "s3:ListBucketMultipartUploads"
+        ]
+        Resource = [
+          for b in var.data_bucket_names : "arn:aws:s3:::${b}/*"
+        ]
+      },
+      {
+        Sid    = "S3ListDataBuckets"
+        Effect = "Allow"
+        Action = ["s3:ListBucket"]
+        Resource = [
+          for b in var.data_bucket_names : "arn:aws:s3:::${b}"
+        ]
+      },
+
       # MWAA performs public access block validation checks as part of bucket use.
       {
         Sid      = "S3AccountPublicAccessBlockRead"

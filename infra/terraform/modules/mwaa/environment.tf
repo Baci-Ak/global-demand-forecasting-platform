@@ -28,8 +28,13 @@ resource "aws_mwaa_environment" "this" {
   requirements_s3_path   = var.requirements_s3_path
   plugins_s3_path        = var.plugins_s3_path
   startup_script_s3_path = var.startup_script_s3_path
+  requirements_s3_object_version   = var.requirements_s3_object_version
+  plugins_s3_object_version        = var.plugins_s3_object_version
+  startup_script_s3_object_version = var.startup_script_s3_object_version
 
   airflow_configuration_options = var.airflow_configuration_options
+  #environment_variables = var.environment_variables
+
 
   network_configuration {
     security_group_ids = concat([aws_security_group.mwaa.id], var.additional_security_group_ids)

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdf"
+version = "0.1.0"
+description = "Global Demand Forecasting pipelines (ingestion, DQ, warehouse)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "GDF Team" }]
+license = { text = "Proprietary" }
+
+# Keep this lean: MWAA will also install your extra deps via requirements.txt
+dependencies = [
+  "pydantic-settings>=2.0",
+  "pydantic>=2.0",
+  "boto3>=1.28",
+  "SQLAlchemy>=1.4,<2.0",
+  "psycopg2-binary>=2.9",
+]
+
+[tool.setuptools]
+# Package the existing top-level packages (no src/ layout required).
+packages = ["gdf", "ingestion", "quality", "warehouse", "warehouse.loaders", "database", "audit_log", "app_config"]
+
+[tool.setuptools.package-data]
+# Include non-python files needed at runtime (dbt project, profiles, macros, etc.).
+warehouse = [
+  "dbt_project.yml",
+  ".dbt/**/*",
+  "models/**/*",
+  "macros/**/*",
+  "seeds/**/*",
+  "snapshots/**/*",
+  "analyses/**/*",
+]
+
+[tool.setuptools.exclude-package-data]
+# Never ship build outputs or noisy logs.
+warehouse = ["target/**/*", "logs/**/*"]

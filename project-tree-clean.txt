@@ -1,0 +1,725 @@
+.
+├── ./.build
+│   ├── ./.build/mwaa
+│   │   ├── ./.build/mwaa/app_config
+│   │   │   ├── ./.build/mwaa/app_config/__init__.py
+│   │   │   └── ./.build/mwaa/app_config/config.py
+│   │   ├── ./.build/mwaa/audit_log
+│   │   │   ├── ./.build/mwaa/audit_log/__init__.py
+│   │   │   ├── ./.build/mwaa/audit_log/dq_audit_logger.py
+│   │   │   └── ./.build/mwaa/audit_log/ingestion_audit_logger.py
+│   │   ├── ./.build/mwaa/dags
+│   │   │   ├── ./.build/mwaa/dags/00_smoke_test.py
+│   │   │   ├── ./.build/mwaa/dags/01_minimal_test.py
+│   │   │   ├── ./.build/mwaa/dags/10_m5_full_refresh_mwaa.py
+│   │   │   └── ./.build/mwaa/dags/10_m5_full_refresh.py
+│   │   ├── ./.build/mwaa/database
+│   │   │   ├── ./.build/mwaa/database/__init__.py
+│   │   │   ├── ./.build/mwaa/database/database.py
+│   │   │   └── ./.build/mwaa/database/models.py
+│   │   ├── ./.build/mwaa/gdf
+│   │   │   ├── ./.build/mwaa/gdf/__init__.py
+│   │   │   ├── ./.build/mwaa/gdf/app_config.py
+│   │   │   ├── ./.build/mwaa/gdf/audit_log.py
+│   │   │   ├── ./.build/mwaa/gdf/database.py
+│   │   │   ├── ./.build/mwaa/gdf/ingestion.py
+│   │   │   ├── ./.build/mwaa/gdf/quality.py
+│   │   │   └── ./.build/mwaa/gdf/warehouse.py
+│   │   ├── ./.build/mwaa/include
+│   │   │   └── ./.build/mwaa/include/gdf_import_check.py
+│   │   ├── ./.build/mwaa/ingestion
+│   │   │   ├── ./.build/mwaa/ingestion/__init__.py
+│   │   │   ├── ./.build/mwaa/ingestion/bronze_io.py
+│   │   │   ├── ./.build/mwaa/ingestion/ingestion_queries.py
+│   │   │   ├── ./.build/mwaa/ingestion/kaggle_client.py
+│   │   │   ├── ./.build/mwaa/ingestion/m5_ingestion.py
+│   │   │   └── ./.build/mwaa/ingestion/s3_client.py
+│   │   ├── ./.build/mwaa/plugins
+│   │   │   └── ./.build/mwaa/plugins/gdf_plugin.py
+│   │   ├── ./.build/mwaa/pyproject.toml
+│   │   ├── ./.build/mwaa/quality
+│   │   │   ├── ./.build/mwaa/quality/__init__.py
+│   │   │   ├── ./.build/mwaa/quality/run_calendar_dq.py
+│   │   │   ├── ./.build/mwaa/quality/run_sales_train_validation_dq.py
+│   │   │   ├── ./.build/mwaa/quality/run_sell_prices_dq.py
+│   │   │   └── ./.build/mwaa/quality/specs
+│   │   │       ├── ./.build/mwaa/quality/specs/m5_calendar.py
+│   │   │       ├── ./.build/mwaa/quality/specs/m5_sales_train_validation.py
+│   │   │       ├── ./.build/mwaa/quality/specs/m5_sell_prices.py
+│   │   │       └── ./.build/mwaa/quality/specs/registry.py
+│   │   ├── ./.build/mwaa/README.md
+│   │   ├── ./.build/mwaa/requirements-mwaa.txt
+│   │   ├── ./.build/mwaa/requirements.txt
+│   │   └── ./.build/mwaa/warehouse
+│   │       ├── ./.build/mwaa/warehouse/__init__.py
+│   │       ├── ./.build/mwaa/warehouse/.dbt
+│   │       │   ├── ./.build/mwaa/warehouse/.dbt/.user.yml
+│   │       │   └── ./.build/mwaa/warehouse/.dbt/profiles.yml
+│   │       ├── ./.build/mwaa/warehouse/.gitignore
+│   │       ├── ./.build/mwaa/warehouse/analyses
+│   │       │   └── ./.build/mwaa/warehouse/analyses/.gitkeep
+│   │       ├── ./.build/mwaa/warehouse/dbt_packages
+│   │       ├── ./.build/mwaa/warehouse/dbt_project.yml
+│   │       ├── ./.build/mwaa/warehouse/loaders
+│   │       │   ├── ./.build/mwaa/warehouse/loaders/__init__.py
+│   │       │   ├── ./.build/mwaa/warehouse/loaders/load_m5_calendar_to_staging.py
+│   │       │   ├── ./.build/mwaa/warehouse/loaders/load_m5_sales_train_validation_to_staging.py
+│   │       │   └── ./.build/mwaa/warehouse/loaders/load_m5_sell_prices_to_staging.py
+│   │       ├── ./.build/mwaa/warehouse/macros
+│   │       │   ├── ./.build/mwaa/warehouse/macros/.gitkeep
+│   │       │   ├── ./.build/mwaa/warehouse/macros/drop_schema.sql
+│   │       │   ├── ./.build/mwaa/warehouse/macros/generate_schema_name.sql
+│   │       │   └── ./.build/mwaa/warehouse/macros/list_schemas.sql
+│   │       ├── ./.build/mwaa/warehouse/models
+│   │       │   ├── ./.build/mwaa/warehouse/models/example
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/example/my_first_dbt_model.sql
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/example/my_second_dbt_model.sql
+│   │       │   │   └── ./.build/mwaa/warehouse/models/example/schema.yml
+│   │       │   ├── ./.build/mwaa/warehouse/models/gold
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/gold/gold_m5_training_daily.sql
+│   │       │   │   └── ./.build/mwaa/warehouse/models/gold/schema.yml
+│   │       │   ├── ./.build/mwaa/warehouse/models/silver
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/schema.yml
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_calendar.sql
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_sales_with_prices.sql
+│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_sales.sql
+│   │       │   │   └── ./.build/mwaa/warehouse/models/silver/silver_m5_sell_prices.sql
+│   │       │   ├── ./.build/mwaa/warehouse/models/staging
+│   │       │   │   └── ./.build/mwaa/warehouse/models/staging/_staging_schema_init.sql
+│   │       │   └── ./.build/mwaa/warehouse/models/staging_sources.yml
+│   │       ├── ./.build/mwaa/warehouse/README.md
+│   │       ├── ./.build/mwaa/warehouse/seeds
+│   │       │   └── ./.build/mwaa/warehouse/seeds/.gitkeep
+│   │       ├── ./.build/mwaa/warehouse/snapshots
+│   │       │   └── ./.build/mwaa/warehouse/snapshots/.gitkeep
+│   │       └── ./.build/mwaa/warehouse/tests
+│   │           ├── ./.build/mwaa/warehouse/tests/.gitkeep
+│   │           ├── ./.build/mwaa/warehouse/tests/test_gold_m5_training_daily_grain_unique.sql
+│   │           ├── ./.build/mwaa/warehouse/tests/test_gold_m5_training_daily_sales_non_negative.sql
+│   │           ├── ./.build/mwaa/warehouse/tests/test_sell_price_coverage.sql
+│   │           └── ./.build/mwaa/warehouse/tests/test_silver_m5_sell_prices_pk_unique.sql
+│   ├── ./.build/mwaa-bundle.zip
+│   └── ./.build/plugins.zip
+├── ./.DS_Store
+├── ./.env.example
+├── ./.github
+│   └── ./.github/workflows
+│       ├── ./.github/workflows/ci.yml
+│       ├── ./.github/workflows/dev-sync-secrets-to-aws.yml
+│       └── ./.github/workflows/pipeline.yml
+├── ./.gitignore
+├── ./.venv-dbt
+│   ├── ./.venv-dbt/bin
+│   │   ├── ./.venv-dbt/bin/activate
+│   │   ├── ./.venv-dbt/bin/activate.csh
+│   │   ├── ./.venv-dbt/bin/activate.fish
+│   │   ├── ./.venv-dbt/bin/Activate.ps1
+│   │   ├── ./.venv-dbt/bin/daff
+│   │   ├── ./.venv-dbt/bin/daff.py
+│   │   ├── ./.venv-dbt/bin/dbt
+│   │   ├── ./.venv-dbt/bin/deep
+│   │   ├── ./.venv-dbt/bin/jsonschema
+│   │   ├── ./.venv-dbt/bin/normalizer
+│   │   ├── ./.venv-dbt/bin/pip
+│   │   ├── ./.venv-dbt/bin/pip3
+│   │   ├── ./.venv-dbt/bin/pip3.11
+│   │   ├── ./.venv-dbt/bin/pybabel
+│   │   ├── ./.venv-dbt/bin/python -> python3.11
+│   │   ├── ./.venv-dbt/bin/python3 -> python3.11
+│   │   ├── ./.venv-dbt/bin/python3.11 -> /Users/AKB_CIM/anaconda3/bin/python3.11
+│   │   ├── ./.venv-dbt/bin/slugify
+│   │   └── ./.venv-dbt/bin/sqlformat
+│   ├── ./.venv-dbt/include
+│   │   └── ./.venv-dbt/include/python3.11
+│   ├── ./.venv-dbt/lib
+│   │   └── ./.venv-dbt/lib/python3.11
+│   └── ./.venv-dbt/pyvenv.cfg
+├── ./alembic
+│   ├── ./alembic/env.py
+│   ├── ./alembic/README
+│   ├── ./alembic/script.py.mako
+│   └── ./alembic/versions
+│       ├── ./alembic/versions/52217c8d714d_add_file_count_to_ingestion_runs.py
+│       ├── ./alembic/versions/870d62ff301e_initial_audit_schema.py
+│       ├── ./alembic/versions/8aa6a32eb5f5_create_staging_schema.py
+│       ├── ./alembic/versions/a72468b1c116_add_run_duration_seconds_to_dq_runs.py
+│       └── ./alembic/versions/b4299d897051_add_total_bytes_to_ingestion_runs.py
+├── ./alembic.ini
+├── ./app_config
+│   ├── ./app_config/__init__.py
+│   └── ./app_config/config.py
+├── ./audit_log
+│   ├── ./audit_log/__init__.py
+│   ├── ./audit_log/dq_audit_logger.py
+│   └── ./audit_log/ingestion_audit_logger.py
+├── ./build
+│   ├── ./build/bdist.macosx-11.0-arm64
+│   └── ./build/lib
+│       ├── ./build/lib/app_config
+│       │   ├── ./build/lib/app_config/__init__.py
+│       │   └── ./build/lib/app_config/config.py
+│       ├── ./build/lib/audit_log
+│       │   ├── ./build/lib/audit_log/__init__.py
+│       │   ├── ./build/lib/audit_log/dq_audit_logger.py
+│       │   └── ./build/lib/audit_log/ingestion_audit_logger.py
+│       ├── ./build/lib/database
+│       │   ├── ./build/lib/database/__init__.py
+│       │   ├── ./build/lib/database/database.py
+│       │   └── ./build/lib/database/models.py
+│       ├── ./build/lib/gdf
+│       │   ├── ./build/lib/gdf/__init__.py
+│       │   ├── ./build/lib/gdf/app_config.py
+│       │   ├── ./build/lib/gdf/audit_log.py
+│       │   ├── ./build/lib/gdf/database.py
+│       │   ├── ./build/lib/gdf/ingestion.py
+│       │   ├── ./build/lib/gdf/quality.py
+│       │   └── ./build/lib/gdf/warehouse.py
+│       ├── ./build/lib/ingestion
+│       │   ├── ./build/lib/ingestion/__init__.py
+│       │   ├── ./build/lib/ingestion/bronze_io.py
+│       │   ├── ./build/lib/ingestion/ingestion_queries.py
+│       │   ├── ./build/lib/ingestion/kaggle_client.py
+│       │   ├── ./build/lib/ingestion/m5_ingestion.py
+│       │   └── ./build/lib/ingestion/s3_client.py
+│       ├── ./build/lib/quality
+│       │   ├── ./build/lib/quality/__init__.py
+│       │   ├── ./build/lib/quality/run_calendar_dq.py
+│       │   ├── ./build/lib/quality/run_sales_train_validation_dq.py
+│       │   ├── ./build/lib/quality/run_sell_prices_dq.py
+│       │   └── ./build/lib/quality/specs
+│       │       ├── ./build/lib/quality/specs/m5_calendar.py
+│       │       ├── ./build/lib/quality/specs/m5_sales_train_validation.py
+│       │       ├── ./build/lib/quality/specs/m5_sell_prices.py
+│       │       └── ./build/lib/quality/specs/registry.py
+│       └── ./build/lib/warehouse
+│           ├── ./build/lib/warehouse/__init__.py
+│           ├── ./build/lib/warehouse/.dbt
+│           │   └── ./build/lib/warehouse/.dbt/profiles.yml
+│           ├── ./build/lib/warehouse/dbt_project.yml
+│           ├── ./build/lib/warehouse/loaders
+│           │   ├── ./build/lib/warehouse/loaders/__init__.py
+│           │   ├── ./build/lib/warehouse/loaders/load_m5_calendar_to_staging.py
+│           │   ├── ./build/lib/warehouse/loaders/load_m5_sales_train_validation_to_staging.py
+│           │   └── ./build/lib/warehouse/loaders/load_m5_sell_prices_to_staging.py
+│           ├── ./build/lib/warehouse/macros
+│           │   ├── ./build/lib/warehouse/macros/drop_schema.sql
+│           │   ├── ./build/lib/warehouse/macros/generate_schema_name.sql
+│           │   └── ./build/lib/warehouse/macros/list_schemas.sql
+│           └── ./build/lib/warehouse/models
+│               ├── ./build/lib/warehouse/models/example
+│               │   ├── ./build/lib/warehouse/models/example/my_first_dbt_model.sql
+│               │   ├── ./build/lib/warehouse/models/example/my_second_dbt_model.sql
+│               │   └── ./build/lib/warehouse/models/example/schema.yml
+│               ├── ./build/lib/warehouse/models/gold
+│               │   ├── ./build/lib/warehouse/models/gold/gold_m5_training_daily.sql
+│               │   └── ./build/lib/warehouse/models/gold/schema.yml
+│               ├── ./build/lib/warehouse/models/silver
+│               │   ├── ./build/lib/warehouse/models/silver/schema.yml
+│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_calendar.sql
+│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales_with_prices.sql
+│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales.sql
+│               │   └── ./build/lib/warehouse/models/silver/silver_m5_sell_prices.sql
+│               ├── ./build/lib/warehouse/models/staging
+│               │   └── ./build/lib/warehouse/models/staging/_staging_schema_init.sql
+│               └── ./build/lib/warehouse/models/staging_sources.yml
+├── ./dashboard
+├── ./database
+│   ├── ./database/__init__.py
+│   ├── ./database/database.py
+│   └── ./database/models.py
+├── ./dist
+│   └── ./dist/gdf-0.1.0-py3-none-any.whl
+├── ./docker
+│   ├── ./docker/airflow
+│   │   ├── ./docker/airflow/Dockerfile
+│   │   ├── ./docker/airflow/requirements-airflow.txt
+│   │   └── ./docker/airflow/requirements-mwaa.txt
+│   └── ./docker/mlflow
+│       └── ./docker/mlflow/Dockerfile
+├── ./docker-compose.airflow.yml
+├── ./docker-compose.yml
+├── ./docs
+│   ├── ./docs/00_project_local_setup.md
+│   ├── ./docs/01_local_platform_setup.md
+│   ├── ./docs/adr
+│   │   └── ./docs/adr/0001-airflow-runtime.md
+│   ├── ./docs/aws_warehouse_deployment_checklist.md
+│   └── ./docs/platform
+│       └── ./docs/platform/00_production_ml_platform_local_playbook.md
+├── ./feature_store
+├── ./gdf
+│   ├── ./gdf/__init__.py
+│   ├── ./gdf/app_config.py
+│   ├── ./gdf/audit_log.py
+│   ├── ./gdf/database.py
+│   ├── ./gdf/ingestion.py
+│   ├── ./gdf/quality.py
+│   └── ./gdf/warehouse.py
+├── ./hello.txt
+├── ./infra
+│   ├── ./infra/.DS_Store
+│   ├── ./infra/sql
+│   │   ├── ./infra/sql/001_create_audit_ingestion_runs.sql
+│   │   └── ./infra/sql/002_create_audit_dq_runs.sql
+│   └── ./infra/terraform
+│       ├── ./infra/terraform/.DS_Store
+│       ├── ./infra/terraform/bin
+│       │   ├── ./infra/terraform/bin/.env.example
+│       │   ├── ./infra/terraform/bin/tunnel_mwaa_ui.sh
+│       │   ├── ./infra/terraform/bin/tunnel_rds_audit.sh
+│       │   └── ./infra/terraform/bin/tunnel_redshift.sh
+│       ├── ./infra/terraform/bootstrap
+│       │   └── ./infra/terraform/bootstrap/tfstate
+│       │       ├── ./infra/terraform/bootstrap/tfstate/dynamodb.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/locals.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/outputs.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/policy.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/providers.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/s3.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate/variables.tf
+│       │       └── ./infra/terraform/bootstrap/tfstate/versions.tf
+│       ├── ./infra/terraform/envs
+│       │   ├── ./infra/terraform/envs/.DS_Store
+│       │   ├── ./infra/terraform/envs/dev
+│       │   │   ├── ./infra/terraform/envs/dev/.DS_Store
+│       │   │   ├── ./infra/terraform/envs/dev/iam
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/iam/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/mwaa
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/data.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/mwaa/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/network
+│       │   │   │   ├── ./infra/terraform/envs/dev/network/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/network/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/network/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/network/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/network/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/network/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/rds-postgres
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/secrets.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/rds-postgres/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/rds-postgres/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/redshift
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/secrets.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/redshift/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/redshift/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/s3
+│       │   │   │   ├── ./infra/terraform/envs/dev/s3/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/s3/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/s3/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/s3/terraform.tfvars
+│       │   │   │   ├── ./infra/terraform/envs/dev/s3/variables.tf
+│       │   │   │   └── ./infra/terraform/envs/dev/s3/versions.tf
+│       │   │   └── ./infra/terraform/envs/dev/ssm-jumphost
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/iam.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/instance.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/main.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/outputs.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/providers.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/security.tf
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/terraform.tfvars
+│       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/variables.tf
+│       │   │       └── ./infra/terraform/envs/dev/ssm-jumphost/versions.tf
+│       │   └── ./infra/terraform/envs/prod
+│       │       └── ./infra/terraform/envs/prod/s3
+│       └── ./infra/terraform/modules
+│           ├── ./infra/terraform/modules/mwaa
+│           │   ├── ./infra/terraform/modules/mwaa/data.tf
+│           │   ├── ./infra/terraform/modules/mwaa/environment.tf
+│           │   ├── ./infra/terraform/modules/mwaa/iam_policy_airflow_core.tf
+│           │   ├── ./infra/terraform/modules/mwaa/iam_policy_secrets_manager.tf
+│           │   ├── ./infra/terraform/modules/mwaa/iam_policy_vpc_networking.tf
+│           │   ├── ./infra/terraform/modules/mwaa/iam_role.tf
+│           │   ├── ./infra/terraform/modules/mwaa/locals.tf
+│           │   ├── ./infra/terraform/modules/mwaa/log_groups.tf
+│           │   ├── ./infra/terraform/modules/mwaa/outputs.tf
+│           │   ├── ./infra/terraform/modules/mwaa/security_group_rules.tf
+│           │   ├── ./infra/terraform/modules/mwaa/security_group.tf
+│           │   └── ./infra/terraform/modules/mwaa/variables.tf
+│           ├── ./infra/terraform/modules/network
+│           │   ├── ./infra/terraform/modules/network/outputs.tf
+│           │   ├── ./infra/terraform/modules/network/routes.tf
+│           │   ├── ./infra/terraform/modules/network/subnets.tf
+│           │   ├── ./infra/terraform/modules/network/variables.tf
+│           │   ├── ./infra/terraform/modules/network/vpc.tf
+│           │   └── ./infra/terraform/modules/network/workloads_security_group.tf
+│           ├── ./infra/terraform/modules/rds-postgres
+│           │   ├── ./infra/terraform/modules/rds-postgres/db.tf
+│           │   ├── ./infra/terraform/modules/rds-postgres/networking.tf
+│           │   ├── ./infra/terraform/modules/rds-postgres/outputs.tf
+│           │   └── ./infra/terraform/modules/rds-postgres/variables.tf
+│           ├── ./infra/terraform/modules/redshift-serverless
+│           │   ├── ./infra/terraform/modules/redshift-serverless/main.tf
+│           │   ├── ./infra/terraform/modules/redshift-serverless/outputs.tf
+│           │   └── ./infra/terraform/modules/redshift-serverless/variables.tf
+│           ├── ./infra/terraform/modules/s3
+│           │   ├── ./infra/terraform/modules/s3/main.tf
+│           │   ├── ./infra/terraform/modules/s3/outputs.tf
+│           │   └── ./infra/terraform/modules/s3/variables.tf
+│           └── ./infra/terraform/modules/vpc_endpoints
+│               ├── ./infra/terraform/modules/vpc_endpoints/endpoints.tf
+│               ├── ./infra/terraform/modules/vpc_endpoints/locals.tf
+│               ├── ./infra/terraform/modules/vpc_endpoints/outputs.tf
+│               ├── ./infra/terraform/modules/vpc_endpoints/security_group.tf
+│               └── ./infra/terraform/modules/vpc_endpoints/variables.tf
+├── ./ingestion
+│   ├── ./ingestion/__init__.py
+│   ├── ./ingestion/bronze_io.py
+│   ├── ./ingestion/ingestion_queries.py
+│   ├── ./ingestion/kaggle_client.py
+│   ├── ./ingestion/m5_ingestion.py
+│   └── ./ingestion/s3_client.py
+├── ./LICENSE.txt
+├── ./local_data
+│   ├── ./local_data/.DS_Store
+│   └── ./local_data/m5
+│       ├── ./local_data/m5/.DS_Store
+│       ├── ./local_data/m5/calendar.csv
+│       ├── ./local_data/m5/sales_train_evaluation.csv
+│       ├── ./local_data/m5/sales_train_validation.csv
+│       ├── ./local_data/m5/sample_submission.csv
+│       └── ./local_data/m5/sell_prices.csv
+├── ./local_smoke.txt
+├── ./logs
+│   └── ./logs/dbt.log
+├── ./Makefile
+├── ./monitoring
+├── ./orchestration
+│   └── ./orchestration/airflow
+│       ├── ./orchestration/airflow/.env.example
+│       ├── ./orchestration/airflow/config
+│       ├── ./orchestration/airflow/dags
+│       │   ├── ./orchestration/airflow/dags/_lib
+│       │   │   └── ./orchestration/airflow/dags/_lib/dag_utils.py
+│       │   ├── ./orchestration/airflow/dags/00_smoke_test.py
+│       │   ├── ./orchestration/airflow/dags/01_minimal_test.py
+│       │   ├── ./orchestration/airflow/dags/10_m5_full_refresh_mwaa.py
+│       │   ├── ./orchestration/airflow/dags/10_m5_full_refresh.py
+│       │   └── ./orchestration/airflow/dags/include
+│       │       ├── ./orchestration/airflow/dags/include/__init__.py
+│       │       └── ./orchestration/airflow/dags/include/gdf_import_check.py
+│       ├── ./orchestration/airflow/include
+│       │   └── ./orchestration/airflow/include/gdf_import_check.py
+│       ├── ./orchestration/airflow/logs
+│       │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T00:51:06.901447+00:00
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T00:51:06.901447+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T00:51:06.901447+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T01:38:24.986665+00:00
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T01:38:24.986665+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T01:38:24.986665+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:13:05.911516+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:13:05.911516+00:00/task_id=intentional_failure
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:13:05.911516+00:00/task_id=intentional_failure/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:13:05.911516+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:13:05.911516+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:26:35.065687+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:26:35.065687+00:00/task_id=intentional_failure
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:26:35.065687+00:00/task_id=intentional_failure/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:26:35.065687+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:26:35.065687+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:27:14.692003+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:27:14.692003+00:00/task_id=intentional_failure
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:27:14.692003+00:00/task_id=intentional_failure/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:27:14.692003+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:27:14.692003+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:35:14.004700+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:35:14.004700+00:00/task_id=intentional_failure
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:35:14.004700+00:00/task_id=intentional_failure/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:35:14.004700+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T15:35:14.004700+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:08:39.839605+00:00
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:08:39.839605+00:00/task_id=verify_mount_and_context
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:08:39.839605+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   │   └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:25:15.090555+00:00
+│       │   │       └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:25:15.090555+00:00/task_id=verify_mount_and_context
+│       │   │           └── ./orchestration/airflow/logs/dag_id=00_smoke_test/run_id=manual__2026-01-29T16:25:15.090555+00:00/task_id=verify_mount_and_context/attempt=1.log
+│       │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:01:45.335273+00:00
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:01:45.335273+00:00/task_id=ingest_m5_to_bronze
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:01:45.335273+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:36:38.888262+00:00
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:36:38.888262+00:00/task_id=ingest_m5_to_bronze
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:36:38.888262+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:41:57.053866+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:41:57.053866+00:00/task_id=dq_all
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:41:57.053866+00:00/task_id=dq_all/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:41:57.053866+00:00/task_id=ingest_m5_to_bronze
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:41:57.053866+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dbt_gold_build_and_test
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dbt_gold_build_and_test/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dbt_silver_build_and_test
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dbt_silver_build_and_test/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dq_all
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=dq_all/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=ingest_m5_to_bronze
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=warehouse_stage_all
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T01:58:54.797236+00:00/task_id=warehouse_stage_all/attempt=1.log
+│       │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dbt_gold_build_and_test
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dbt_gold_build_and_test/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dbt_silver_build_and_test
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dbt_silver_build_and_test/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dq_all
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=dq_all/attempt=1.log
+│       │   │   │   ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=ingest_m5_to_bronze
+│       │   │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=warehouse_stage_all
+│       │   │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:08:55.858333+00:00/task_id=warehouse_stage_all/attempt=1.log
+│       │   │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00
+│       │   │       ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dbt_gold_build_and_test
+│       │   │       │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dbt_gold_build_and_test/attempt=1.log
+│       │   │       ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dbt_silver_build_and_test
+│       │   │       │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dbt_silver_build_and_test/attempt=1.log
+│       │   │       ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dq_all
+│       │   │       │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=dq_all/attempt=1.log
+│       │   │       ├── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=ingest_m5_to_bronze
+│       │   │       │   └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=ingest_m5_to_bronze/attempt=1.log
+│       │   │       └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=warehouse_stage_all
+│       │   │           └── ./orchestration/airflow/logs/dag_id=10_m5_full_refresh/run_id=manual__2026-01-29T16:26:46.244817+00:00/task_id=warehouse_stage_all/attempt=1.log
+│       │   ├── ./orchestration/airflow/logs/dag_processor_manager
+│       │   │   └── ./orchestration/airflow/logs/dag_processor_manager/dag_processor_manager.log
+│       │   └── ./orchestration/airflow/logs/scheduler
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-01-28
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-01-29
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-01-29/00_smoke_test.py.log
+│       │       │   └── ./orchestration/airflow/logs/scheduler/2026-01-29/10_m5_full_refresh.py.log
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-01-30
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-01-30/00_smoke_test.py.log
+│       │       │   └── ./orchestration/airflow/logs/scheduler/2026-01-30/10_m5_full_refresh.py.log
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-01-31
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-01-31/00_smoke_test.py.log
+│       │       │   └── ./orchestration/airflow/logs/scheduler/2026-01-31/10_m5_full_refresh.py.log
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-02-01
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-02-01/00_smoke_test.py.log
+│       │       │   └── ./orchestration/airflow/logs/scheduler/2026-02-01/10_m5_full_refresh.py.log
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-02-02
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-02-03
+│       │       ├── ./orchestration/airflow/logs/scheduler/2026-02-19
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-02-19/00_smoke_test.py.log
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-02-19/01_minimal_test.py.log
+│       │       │   ├── ./orchestration/airflow/logs/scheduler/2026-02-19/10_m5_full_refresh_mwaa.py.log
+│       │       │   └── ./orchestration/airflow/logs/scheduler/2026-02-19/10_m5_full_refresh.py.log
+│       │       └── ./orchestration/airflow/logs/scheduler/latest -> 2026-02-19
+│       ├── ./orchestration/airflow/plugins
+│       │   └── ./orchestration/airflow/plugins/gdf_plugin.py
+│       ├── ./orchestration/airflow/README.md
+│       ├── ./orchestration/airflow/requirements-mwaa.txt
+│       └── ./orchestration/airflow/startup
+│           ├── ./orchestration/airflow/startup/gdf_runtime.conf
+│           └── ./orchestration/airflow/startup/startup.sh
+├── ./project-tree-clean.txt
+├── ./pyproject.toml
+├── ./quality
+│   ├── ./quality/__init__.py
+│   ├── ./quality/run_calendar_dq.py
+│   ├── ./quality/run_sales_train_validation_dq.py
+│   ├── ./quality/run_sell_prices_dq.py
+│   └── ./quality/specs
+│       ├── ./quality/specs/m5_calendar.py
+│       ├── ./quality/specs/m5_sales_train_validation.py
+│       ├── ./quality/specs/m5_sell_prices.py
+│       └── ./quality/specs/registry.py
+├── ./README.md
+├── ./requirements-dbt.txt
+├── ./requirements-mwaa.txt
+├── ./requirements.txt
+├── ./scripts
+│   └── ./scripts/secret_scan.sh
+├── ./serving
+├── ./test.ipynb
+├── ./training
+│   └── ./training/test_mlflow.py
+└── ./warehouse
+    ├── ./warehouse/__init__.py
+    ├── ./warehouse/.dbt
+    │   ├── ./warehouse/.dbt/.user.yml
+    │   └── ./warehouse/.dbt/profiles.yml
+    ├── ./warehouse/.gitignore
+    ├── ./warehouse/analyses
+    │   └── ./warehouse/analyses/.gitkeep
+    ├── ./warehouse/dbt_packages
+    ├── ./warehouse/dbt_project.yml
+    ├── ./warehouse/loaders
+    │   ├── ./warehouse/loaders/__init__.py
+    │   ├── ./warehouse/loaders/load_m5_calendar_to_staging.py
+    │   ├── ./warehouse/loaders/load_m5_sales_train_validation_to_staging.py
+    │   └── ./warehouse/loaders/load_m5_sell_prices_to_staging.py
+    ├── ./warehouse/logs
+    │   └── ./warehouse/logs/dbt.log
+    ├── ./warehouse/macros
+    │   ├── ./warehouse/macros/.gitkeep
+    │   ├── ./warehouse/macros/drop_schema.sql
+    │   ├── ./warehouse/macros/generate_schema_name.sql
+    │   └── ./warehouse/macros/list_schemas.sql
+    ├── ./warehouse/models
+    │   ├── ./warehouse/models/example
+    │   │   ├── ./warehouse/models/example/my_first_dbt_model.sql
+    │   │   ├── ./warehouse/models/example/my_second_dbt_model.sql
+    │   │   └── ./warehouse/models/example/schema.yml
+    │   ├── ./warehouse/models/gold
+    │   │   ├── ./warehouse/models/gold/gold_m5_training_daily.sql
+    │   │   └── ./warehouse/models/gold/schema.yml
+    │   ├── ./warehouse/models/silver
+    │   │   ├── ./warehouse/models/silver/schema.yml
+    │   │   ├── ./warehouse/models/silver/silver_m5_calendar.sql
+    │   │   ├── ./warehouse/models/silver/silver_m5_sales_with_prices.sql
+    │   │   ├── ./warehouse/models/silver/silver_m5_sales.sql
+    │   │   └── ./warehouse/models/silver/silver_m5_sell_prices.sql
+    │   ├── ./warehouse/models/staging
+    │   │   └── ./warehouse/models/staging/_staging_schema_init.sql
+    │   └── ./warehouse/models/staging_sources.yml
+    ├── ./warehouse/README.md
+    ├── ./warehouse/seeds
+    │   └── ./warehouse/seeds/.gitkeep
+    ├── ./warehouse/snapshots
+    │   └── ./warehouse/snapshots/.gitkeep
+    ├── ./warehouse/target
+    │   ├── ./warehouse/target/catalog.json
+    │   ├── ./warehouse/target/compiled
+    │   │   └── ./warehouse/target/compiled/warehouse
+    │   │       ├── ./warehouse/target/compiled/warehouse/models
+    │   │       │   ├── ./warehouse/target/compiled/warehouse/models/example
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/example/my_first_dbt_model.sql
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/example/my_second_dbt_model.sql
+    │   │       │   │   └── ./warehouse/target/compiled/warehouse/models/example/schema.yml
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/example/schema.yml/not_null_my_first_dbt_model_id.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/example/schema.yml/not_null_my_second_dbt_model_id.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/example/schema.yml/unique_my_first_dbt_model_id.sql
+    │   │       │   │       └── ./warehouse/target/compiled/warehouse/models/example/schema.yml/unique_my_second_dbt_model_id.sql
+    │   │       │   ├── ./warehouse/target/compiled/warehouse/models/gold
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/gold/gold_m5_training_daily.sql
+    │   │       │   │   └── ./warehouse/target/compiled/warehouse/models/gold/schema.yml
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_date.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_item_id.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_sales.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_store_id.sql
+    │   │       │   │       └── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_wm_yr_wk.sql
+    │   │       │   ├── ./warehouse/target/compiled/warehouse/models/silver
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_day_of_week.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_day.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_month.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_weekday.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_wm_yr_wk.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_year.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_cat_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_dept_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_sales.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_state_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_sales.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_wm_yr_wk.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_sell_price.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_wm_yr_wk.sql
+    │   │       │   │   │   └── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/unique_silver_m5_calendar_d.sql
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/silver_m5_calendar.sql
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/silver_m5_sales_with_prices.sql
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/silver_m5_sales.sql
+    │   │       │   │   └── ./warehouse/target/compiled/warehouse/models/silver/silver_m5_sell_prices.sql
+    │   │       │   └── ./warehouse/target/compiled/warehouse/models/staging
+    │   │       │       └── ./warehouse/target/compiled/warehouse/models/staging/_staging_schema_init.sql
+    │   │       └── ./warehouse/target/compiled/warehouse/tests
+    │   │           ├── ./warehouse/target/compiled/warehouse/tests/test_gold_m5_training_daily_grain_unique.sql
+    │   │           ├── ./warehouse/target/compiled/warehouse/tests/test_gold_m5_training_daily_sales_non_negative.sql
+    │   │           ├── ./warehouse/target/compiled/warehouse/tests/test_sell_price_coverage.sql
+    │   │           └── ./warehouse/target/compiled/warehouse/tests/test_silver_m5_sell_prices_pk_unique.sql
+    │   ├── ./warehouse/target/graph_summary.json
+    │   ├── ./warehouse/target/graph.gpickle
+    │   ├── ./warehouse/target/index.html
+    │   ├── ./warehouse/target/manifest.json
+    │   ├── ./warehouse/target/partial_parse.msgpack
+    │   ├── ./warehouse/target/perf_info.json
+    │   ├── ./warehouse/target/run
+    │   │   └── ./warehouse/target/run/warehouse
+    │   │       ├── ./warehouse/target/run/warehouse/models
+    │   │       │   ├── ./warehouse/target/run/warehouse/models/gold
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/gold/gold_m5_training_daily.sql
+    │   │       │   │   └── ./warehouse/target/run/warehouse/models/gold/schema.yml
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_date.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_item_id.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_sales.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_store_id.sql
+    │   │       │   │       └── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_wm_yr_wk.sql
+    │   │       │   ├── ./warehouse/target/run/warehouse/models/silver
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_day_of_week.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_day.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_month.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_weekday.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_wm_yr_wk.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_year.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_cat_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_dept_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_sales.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_state_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_d.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_date.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_sales.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sales_with_prices_wm_yr_wk.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_item_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_sell_price.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_store_id.sql
+    │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_sell_prices_wm_yr_wk.sql
+    │   │       │   │   │   └── ./warehouse/target/run/warehouse/models/silver/schema.yml/unique_silver_m5_calendar_d.sql
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/silver/silver_m5_calendar.sql
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/silver/silver_m5_sales_with_prices.sql
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/silver/silver_m5_sales.sql
+    │   │       │   │   └── ./warehouse/target/run/warehouse/models/silver/silver_m5_sell_prices.sql
+    │   │       │   └── ./warehouse/target/run/warehouse/models/staging
+    │   │       │       └── ./warehouse/target/run/warehouse/models/staging/_staging_schema_init.sql
+    │   │       └── ./warehouse/target/run/warehouse/tests
+    │   │           ├── ./warehouse/target/run/warehouse/tests/test_gold_m5_training_daily_grain_unique.sql
+    │   │           ├── ./warehouse/target/run/warehouse/tests/test_gold_m5_training_daily_sales_non_negative.sql
+    │   │           ├── ./warehouse/target/run/warehouse/tests/test_sell_price_coverage.sql
+    │   │           └── ./warehouse/target/run/warehouse/tests/test_silver_m5_sell_prices_pk_unique.sql
+    │   ├── ./warehouse/target/run_results.json
+    │   └── ./warehouse/target/semantic_manifest.json
+    └── ./warehouse/tests
+        ├── ./warehouse/tests/.gitkeep
+        ├── ./warehouse/tests/test_gold_m5_training_daily_grain_unique.sql
+        ├── ./warehouse/tests/test_gold_m5_training_daily_sales_non_negative.sql
+        ├── ./warehouse/tests/test_sell_price_coverage.sql
+        └── ./warehouse/tests/test_silver_m5_sell_prices_pk_unique.sql

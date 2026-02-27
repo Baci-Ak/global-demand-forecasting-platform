@@ -44,6 +44,7 @@ resource "aws_redshiftserverless_namespace" "this" {
   db_name             = var.database_name
   admin_username      = var.admin_username
   admin_user_password = var.admin_password
+  iam_roles           = [aws_iam_role.redshift_copy_role.arn]
 
   tags = {
     Name = "${var.project_name}-${var.environment}-redshift-ns"
@@ -62,4 +63,48 @@ resource "aws_redshiftserverless_workgroup" "this" {
   tags = {
     Name = "${var.project_name}-${var.environment}-redshift-wg"
   }
+}
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# IAM role for Redshift COPY from S3
+# ------------------------------------------------------------------------------
+
+resource "aws_iam_role" "redshift_copy_role" {
+  name = "${var.project_name}-${var.environment}-redshift-copy-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "redshift.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "redshift_copy_s3_policy" {
+  name = "${var.project_name}-${var.environment}-redshift-copy-s3"
+  role = aws_iam_role.redshift_copy_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }

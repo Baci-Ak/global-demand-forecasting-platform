@@ -52,3 +52,46 @@ variable "s3_force_destroy" {
   type        = bool
   default     = true
 }
+
+
+
+
+# ------------------------------------------------------------------------------
+# Lifecycle / retention for the bronze bucket (cost control)
+# ------------------------------------------------------------------------------
+
+variable "bronze_enable_lifecycle" {
+  description = "Enable lifecycle rules for the bronze bucket."
+  type        = bool
+  default     = true
+}
+
+variable "bronze_lifecycle_expire_days" {
+  description = "Expire (delete) current objects in bronze after N days."
+  type        = number
+  default     = 180
+}
+
+variable "bronze_lifecycle_noncurrent_expire_days" {
+  description = "Expire noncurrent (versioned) bronze objects after N days."
+  type        = number
+  default     = 30
+}
+
+variable "bronze_lifecycle_abort_multipart_days" {
+  description = "Abort incomplete multipart uploads after N days."
+  type        = number
+  default     = 7
+}
+
+variable "bronze_lifecycle_transition_ia_days" {
+  description = "Transition bronze objects to STANDARD_IA after N days."
+  type        = number
+  default     = 30
+}
+
+variable "bronze_lifecycle_transition_glacier_days" {
+  description = "Transition bronze objects to GLACIER after N days."
+  type        = number
+  default     = 90
+}

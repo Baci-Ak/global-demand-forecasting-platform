@@ -48,7 +48,14 @@ module "redshift" {
   admin_username = var.admin_username
   admin_password = random_password.redshift_admin.result
 
+  # Allow private connectivity from:
+  # - SSM jumphost (human access via SSM tunnels)
+  # - Workloads SG (MWAA workers/scheduler and other private workloads)
+  #
+  # This keeps Redshift private (no public ingress) and scales cleanly as more
+  # internal services are added behind the workloads SG.
   allowed_sg_ids = [
-    data.terraform_remote_state.ssm_jumphost.outputs.jumphost_security_group_id
+    data.terraform_remote_state.ssm_jumphost.outputs.jumphost_security_group_id,
+    data.terraform_remote_state.network.outputs.workloads_security_group_id,
   ]
 }

@@ -38,3 +38,31 @@ resource "aws_secretsmanager_secret_version" "db_master" {
   })
 }
 
+
+
+
+# ------------------------------------------------------------------------------
+# Convenience secret: POSTGRES_DSN (what the app expects)
+# ------------------------------------------------------------------------------
+
+resource "aws_secretsmanager_secret" "postgres_dsn" {
+  name        = "${var.project_name}/${var.environment}/postgres_dsn"
+  description = "Application DSN for the audit Postgres database."
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-postgres-dsn"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "postgres_dsn" {
+  secret_id = aws_secretsmanager_secret.postgres_dsn.id
+
+  secret_string = format(
+    "postgresql://%s:%s@%s:%s/%s",
+    var.db_username,
+    random_password.db_master.result,
+    module.rds_postgres.endpoint,
+    module.rds_postgres.port,
+    module.rds_postgres.db_name
+  )
+}

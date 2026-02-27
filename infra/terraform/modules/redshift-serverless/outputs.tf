@@ -30,3 +30,9 @@ output "security_group_id" {
   description = "Security group id for Redshift."
   value       = aws_security_group.redshift.id
 }
+
+
+output "copy_role_arn" {
+  description = "IAM role ARN that Redshift Serverless uses for COPY/UNLOAD to S3."
+  value       = aws_iam_role.redshift_copy_role.arn
+}

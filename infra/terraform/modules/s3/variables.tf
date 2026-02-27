@@ -70,3 +70,48 @@ variable "kms_key_arn" {
     error_message = "kms_key_arn must be set when sse_algorithm is \"aws:kms\"."
   }
 }
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# Lifecycle / retention (cost control)
+# ------------------------------------------------------------------------------
+
+variable "enable_lifecycle" {
+  description = "Whether to enable lifecycle rules on the bucket."
+  type        = bool
+  default     = false
+}
+
+variable "lifecycle_expire_days" {
+  description = "Expire (delete) current objects after N days. Null disables expiration."
+  type        = number
+  default     = null
+}
+
+variable "lifecycle_noncurrent_expire_days" {
+  description = "Expire noncurrent (versioned) objects after N days. Null disables."
+  type        = number
+  default     = 30
+}
+
+variable "lifecycle_abort_multipart_days" {
+  description = "Abort incomplete multipart uploads after N days."
+  type        = number
+  default     = 7
+}
+
+variable "lifecycle_transition_ia_days" {
+  description = "Transition to STANDARD_IA after N days. Null disables."
+  type        = number
+  default     = 30
+}
+
+variable "lifecycle_transition_glacier_days" {
+  description = "Transition to GLACIER after N days. Null disables."
+  type        = number
+  default     = 90
+}

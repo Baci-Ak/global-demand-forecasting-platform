@@ -35,3 +35,9 @@ output "redshift_security_group_id" {
   description = "Security group id attached to the Redshift workgroup."
   value       = module.redshift.security_group_id
 }
+
+
+output "redshift_copy_role_arn" {
+  description = "IAM role ARN used by Redshift for COPY/UNLOAD to S3."
+  value       = module.redshift.copy_role_arn
+}

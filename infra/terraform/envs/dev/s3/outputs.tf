@@ -27,3 +27,20 @@ output "iam_terraform_execution_role_arn" {
   description = "IAM stack terraform execution role ARN (from remote state)."
   value       = data.terraform_remote_state.iam.outputs.terraform_execution_role_arn
 }
+
+
+
+output "airflow_bucket_name" {
+  description = "Name of the dev MWAA (Airflow runtime) bucket."
+  value       = module.airflow_bucket.bucket_name
+}
+
+output "airflow_bucket_arn" {
+  description = "ARN of the dev MWAA (Airflow runtime) bucket."
+  value       = module.airflow_bucket.bucket_arn
+}
+
+output "airflow_bucket_id" {
+  description = "ID of the dev MWAA (Airflow runtime) bucket."
+  value       = module.airflow_bucket.bucket_id
+}

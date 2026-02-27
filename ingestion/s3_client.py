@@ -23,7 +23,7 @@ from pathlib import Path
 import boto3
 from botocore.config import Config
 
-from config.config import settings
+from app_config.config import settings
 
 
 def _require_s3_settings() -> None:
@@ -35,10 +35,16 @@ def _require_s3_settings() -> None:
     #         "Missing MLFLOW_S3_ENDPOINT_URL. Set it to your MinIO/S3 endpoint URL."
     #     )
 
-    if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
-        raise RuntimeError(
-            "Missing AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3/MinIO access."
-        )
+    # if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
+    #     raise RuntimeError(
+    #         "Missing AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3/MinIO access."
+    #     )
+    
+
+    # In AWS (MWAA), boto3 uses the execution role automatically.
+    # Access keys are only required for local MinIO-style usage.
+    if settings.MLFLOW_S3_ENDPOINT_URL and (not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY):
+        raise RuntimeError("Missing AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for MinIO access.")
 
     if not settings.BRONZE_BUCKET:
         raise RuntimeError("Missing BRONZE_BUCKET.")

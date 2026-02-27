@@ -52,3 +52,25 @@ resource "aws_security_group_rule" "postgres_from_trusted_sg" {
 
   description = "Allow Postgres access from the trusted source security group."
 }
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# Optional ingress: allow Postgres access from additional trusted SGs (e.g., MWAA)
+# ------------------------------------------------------------------------------
+
+resource "aws_security_group_rule" "postgres_from_additional_trusted_sgs" {
+  for_each = toset(var.additional_trusted_source_sg_ids)
+
+  type              = "ingress"
+  security_group_id = aws_security_group.db.id
+
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+  source_security_group_id = each.value
+
+  description = "Allow Postgres access from additional trusted security groups."
+}

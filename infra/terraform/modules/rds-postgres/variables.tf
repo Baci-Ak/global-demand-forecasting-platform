@@ -111,3 +111,15 @@ variable "db_port" {
   type        = number
   default     = 5432
 }
+
+
+
+# ------------------------------------------------------------------------------
+# Optional ingress: additional SGs allowed to connect (e.g., MWAA/workloads SG)
+# ------------------------------------------------------------------------------
+
+variable "additional_trusted_source_sg_ids" {
+  description = "Additional security group IDs allowed to connect to Postgres (e.g., MWAA/workloads SG)."
+  type        = list(string)
+  default     = []
+}

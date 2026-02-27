@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from config.config import settings
+from app_config.config import settings
 AUDIT_SCHEMA = settings.AUDIT_SCHEMA
 
 
