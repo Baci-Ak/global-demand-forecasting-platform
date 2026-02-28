@@ -1,0 +1,66 @@
+# ==============================================================================
+# Prod - Deploy MWAA Artifacts
+# ------------------------------------------------------------------------------
+# Purpose
+# - On pushes to `main`, publish MWAA runtime artifacts to the prod MWAA S3 bucket:
+#   - DAGs, requirements.txt, plugins.zip, startup.sh + runtime config, wheel
+# - Then trigger an MWAA environment update so MWAA reloads requirements/plugins/startup.
+#
+# Safety
+# - Uses GitHub Environment `prod` which should require approval.
+# - Uses GitHub OIDC (no static AWS keys).
+# ==============================================================================
+
+name: Prod - Deploy MWAA Artifacts
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # ------------------------------------------------------------------------
+      # Source
+      # ------------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------------
+      # Auth (OIDC)
+      # ------------------------------------------------------------------------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ------------------------------------------------------------------------
+      # Build + publish artifacts (delegated to Makefile)
+      # ------------------------------------------------------------------------
+      - name: Install system deps (zip)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: Publish MWAA artifacts to S3 (prod)
+        env:
+          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+        run: |
+          make mwaa-ci-deploy
+
+      # ------------------------------------------------------------------------
+      # MWAA refresh
+      # ------------------------------------------------------------------------
+      - name: Trigger MWAA environment update (prod)
+        run: |
+          aws mwaa update-environment \
+            --name "${{ vars.MWAA_ENV_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"
