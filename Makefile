@@ -421,7 +421,7 @@ mwaa-ci-setup:
 # - One command CI can run to publish MWAA artifacts to S3.
 # ==============================================================================
 
-# CI metadata (GitHub Actions sets GITHUB_SHA automatically)
+# CI metadata (GitHub Actions sets GITHUB_SHA automatically
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "local")
 
 
