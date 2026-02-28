@@ -48,6 +48,7 @@ AWS_REGION ?= us-east-1
 	warehouse-silver warehouse-gold warehouse-refresh \
 	aws-azs \
 	mwaa-build-plugins mwaa-upload-dags mwaa-upload-requirements mwaa-upload-plugins mwaa-upload-startup mwaa-upload-all \
+	mwaa-upload-alembic \
 	mwaa-build-wheel mwaa-upload-wheel \
 	pkg-install \
 	tunnel-mwaa-ui tunnel-rds-audit tunnel-redshift
@@ -323,6 +324,7 @@ MWAA_REQ_PREFIX       ?= airflow/requirements
 MWAA_PLUGINS_PREFIX   ?= airflow/plugins
 MWAA_STARTUP_PREFIX   ?= airflow/startup
 MWAA_WHEEL_PREFIX     ?= airflow/packages
+MWAA_ALEMBIC_PREFIX ?= airflow/startup/alembic
 
 
 MWAA_PLUGINS_ZIP := .build/plugins.zip
@@ -357,6 +359,28 @@ mwaa-upload-startup:
 
 mwaa-upload-all: mwaa-upload-dags mwaa-upload-requirements mwaa-upload-plugins mwaa-upload-startup
 	@echo "✅ All MWAA artifacts uploaded"
+
+
+
+# ==============================================================================
+# MWAA: Upload Alembic migrations (audit DB schema)
+# - MWAA tasks runs Alembic against the private RDS from inside AWS.
+
+# ==============================================================================
+
+
+
+.PHONY: mwaa-upload-alembic
+
+mwaa-upload-alembic:
+	aws s3 cp alembic.ini s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic.ini
+	aws s3 sync alembic s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic \
+	  --delete \
+	  --exclude "__pycache__/*" \
+	  --exclude "*.pyc" \
+	  --exclude ".DS_Store"
+	@echo "✅ Uploaded Alembic -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/"
+
 
 
 # ==============================================================================
@@ -421,7 +445,7 @@ mwaa-ci-setup:
 # - One command CI can run to publish MWAA artifacts to S3.
 # ==============================================================================
 
-# CI metadata (GitHub Actions sets GITHUB_SHA automatically
+# CI metadata (GitHub Actions sets GITHUB_SHA automatically)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "local")
 
 
@@ -436,6 +460,7 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@$(MAKE) mwaa-upload-requirements
 	@$(MAKE) mwaa-upload-plugins
 	@$(MAKE) mwaa-upload-startup
+	@$(MAKE) mwaa-upload-alembic
 	@$(MAKE) mwaa-build-wheel
 	@echo ""
 	@WHEEL="$$(ls -1 dist/*.whl | head -n 1)"; \
@@ -446,8 +471,8 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@echo "  DAGs          s3://$(MWAA_DAG_BUCKET)/$(MWAA_DAG_PREFIX)/"
 	@echo "  requirements  s3://$(MWAA_DAG_BUCKET)/$(MWAA_REQ_PREFIX)/requirements.txt"
 	@echo "  plugins       s3://$(MWAA_DAG_BUCKET)/$(MWAA_PLUGINS_PREFIX)/plugins.zip"
-	@echo "  startup       s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/startup.sh"
-	@echo "  runtime conf  s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/gdf_runtime.conf"
+	@echo "  startup       s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/"
+	@echo "  alembic       s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/"
 	@echo "  wheel         s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/"
 	@echo ""
 	@echo "Done."
