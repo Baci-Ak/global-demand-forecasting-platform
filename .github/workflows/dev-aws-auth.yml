@@ -1,9 +1,21 @@
-name: Dev - Deploy MWAA Artifacts
+# ==============================================================================
+# Dev - Deploy MWAA Artifacts
+# ------------------------------------------------------------------------------
+# Purpose
+# - On pushes to `dev`, publish MWAA runtime artifacts to the dev MWAA S3 bucket:
+#   - DAGs, requirements.txt, plugins.zip, startup.sh + runtime config, wheel
+# - Then trigger an MWAA environment update so MWAA reloads requirements/plugins/startup.
 #
+# Design
+# - Keep workflow thin: delegate packaging/upload logic to Makefile (mwaa-ci-deploy).
+# - Use GitHub OIDC to assume an AWS role (no static AWS keys).
+# ==============================================================================
+
+name: Dev - Deploy MWAA Artifacts
+
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
 
 jobs:
   deploy:
@@ -15,29 +27,40 @@ jobs:
       contents: read
 
     steps:
+      # ------------------------------------------------------------------------
+      # Source
+      # ------------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ------------------------------------------------------------------------
+      # Auth (OIDC)
+      # ------------------------------------------------------------------------
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Install zip
-        run: sudo apt-get update && sudo apt-get install -y zip
+      # ------------------------------------------------------------------------
+      # Build + publish artifacts (delegated to Makefile)
+      # ------------------------------------------------------------------------
+      - name: Install system deps (zip)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
 
-      - name: Upload DAGs / requirements / plugins / startup to S3 (dev)
+      - name: Publish MWAA artifacts to S3 (dev)
         env:
           MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
-          MWAA_DAG_PREFIX: airflow/dags
-          MWAA_REQ_PREFIX: airflow/requirements
-          MWAA_PLUGINS_PREFIX: airflow/plugins
-          MWAA_STARTUP_PREFIX: airflow/startup
         run: |
-          make mwaa-upload-all
+          make mwaa-ci-deploy
 
-      - name: Trigger MWAA environment refresh (dev)
+      # ------------------------------------------------------------------------
+      # MWAA refresh
+      # - Required for requirements/plugins/startup changes to take effect.
+      # ------------------------------------------------------------------------
+      - name: Trigger MWAA environment update (dev)
         run: |
           aws mwaa update-environment \
             --name "${{ vars.MWAA_ENV_NAME }}" \

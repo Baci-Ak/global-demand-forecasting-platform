@@ -401,7 +401,18 @@ tunnel-redshift:
 	@infra/terraform/bin/tunnel_redshift.sh
 
 
+# ==============================================================================
+# MWAA (CI deploy helpers)
+# ==============================================================================
 
+.PHONY: mwaa-ci-setup
+
+mwaa-ci-setup:
+	@echo "== MWAA CI setup =="
+	@python -c "import sys; print('python=', sys.version)"
+	@python -m pip install --upgrade pip
+	@python -m pip install --upgrade build
+	@echo "OK: python build tooling installed"
 
 
 
@@ -419,7 +430,7 @@ MWAA_WHEEL_KEY ?= $(MWAA_WHEEL_PREFIX)/gdf-latest.whl
 
 .PHONY: mwaa-ci-deploy
 
-mwaa-ci-deploy:
+mwaa-ci-deploy: mwaa-ci-setup
 	@echo "== MWAA CI deploy =="
 	@echo "Bucket:  s3://$(MWAA_DAG_BUCKET)"
 	@echo "SHA:     $(GIT_SHA)"
@@ -430,8 +441,9 @@ mwaa-ci-deploy:
 	@$(MAKE) mwaa-upload-startup
 	@$(MAKE) mwaa-build-wheel
 	@echo ""
-	@echo "Uploading wheel -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"
-	@aws s3 cp dist/*.whl s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)
+	@WHEEL="$$(ls -1 dist/*.whl | head -n 1)"; \
+	echo "Uploading wheel: $$WHEEL -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"; \
+	aws s3 cp "$$WHEEL" "s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"
 	@echo ""
 	@echo "Deployed:"
 	@echo "  DAGs          s3://$(MWAA_DAG_BUCKET)/$(MWAA_DAG_PREFIX)/"
