@@ -419,14 +419,11 @@ mwaa-ci-setup:
 # ==============================================================================
 # MWAA (CI deploy helpers)
 # - One command CI can run to publish MWAA artifacts to S3.
-# - Uses stable keys (no VersionId printing).
 # ==============================================================================
 
 # CI metadata (GitHub Actions sets GITHUB_SHA automatically)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "local")
 
-# Stable wheel key that MWAA startup installs (keeps gdf_runtime.conf unchanged)
-MWAA_WHEEL_KEY ?= $(MWAA_WHEEL_PREFIX)/gdf-latest.whl
 
 .PHONY: mwaa-ci-deploy
 
@@ -442,8 +439,8 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@$(MAKE) mwaa-build-wheel
 	@echo ""
 	@WHEEL="$$(ls -1 dist/*.whl | head -n 1)"; \
-	echo "Uploading wheel: $$WHEEL -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"; \
-	aws s3 cp "$$WHEEL" "s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"
+	echo "Uploading wheel: $$WHEEL -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/$$(basename "$$WHEEL")"; \
+	aws s3 cp "$$WHEEL" "s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/$$(basename "$$WHEEL")"
 	@echo ""
 	@echo "Deployed:"
 	@echo "  DAGs          s3://$(MWAA_DAG_BUCKET)/$(MWAA_DAG_PREFIX)/"
@@ -451,6 +448,6 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@echo "  plugins       s3://$(MWAA_DAG_BUCKET)/$(MWAA_PLUGINS_PREFIX)/plugins.zip"
 	@echo "  startup       s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/startup.sh"
 	@echo "  runtime conf  s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/gdf_runtime.conf"
-	@echo "  wheel         s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_KEY)"
+	@echo "  wheel         s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/"
 	@echo ""
 	@echo "Done."
