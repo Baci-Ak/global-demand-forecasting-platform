@@ -1,27 +1,47 @@
 # ==============================================================================
-# Prod - Deploy MWAA Artifacts
-# ------------------------------------------------------------------------------
+# Prod - Deploy to MWAA (manual)
+# ==============================================================================
+#
 # Purpose
-# - On pushes to `main`, publish MWAA runtime artifacts to the prod MWAA S3 bucket:
-#   - DAGs, requirements.txt, plugins.zip, startup.sh + runtime config, wheel
-# - Then trigger an MWAA environment update so MWAA reloads requirements/plugins/startup.
+# - Deploy MWAA artifacts to production on demand.
+# - Prevent accidental MWAA restarts caused by normal commits.
 #
 # Safety
-# - Uses GitHub Environment `prod` which should require approval.
-# - Uses GitHub OIDC (no static AWS keys).
+# - Uses GitHub Environment: prod (should require reviewer approval).
+# - Uses GitHub OIDC to assume AWS role (no static AWS keys).
+#
+# Usage
+# - GitHub → Actions → this workflow → Run workflow
+# - deploy_scope:
+#   - dags-only : sync DAGs to S3 (no MWAA update)
+#   - full      : deploy runtime artifacts + wheel, then trigger MWAA update
 # ==============================================================================
 
-name: Prod - Deploy MWAA Artifacts
+name: Prod - Deploy to MWAA (manual)
 
+# ------------------------------------------------------------------------------
+# Trigger (manual only)
+# ------------------------------------------------------------------------------
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "What to deploy"
+        required: true
+        default: "dags-only"
+        type: choice
+        options:
+          - dags-only
+          - full
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: prod
 
+    # --------------------------------------------------------------------------
+    # Required for OIDC -> AWS STS
+    # --------------------------------------------------------------------------
     permissions:
       id-token: write
       contents: read
@@ -43,14 +63,28 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       # ------------------------------------------------------------------------
-      # Build + publish artifacts (delegated to Makefile)
+      # System dependencies
       # ------------------------------------------------------------------------
       - name: Install system deps (zip)
         run: |
           sudo apt-get update
           sudo apt-get install -y zip
 
-      - name: Publish MWAA artifacts to S3 (prod)
+      # ------------------------------------------------------------------------
+      # Deploy: DAGs only (no MWAA update needed)
+      # ------------------------------------------------------------------------
+      - name: Deploy DAGs only (prod)
+        if: ${{ inputs.deploy_scope == 'dags-only' }}
+        env:
+          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+        run: |
+          make mwaa-upload-dags
+
+      # ------------------------------------------------------------------------
+      # Deploy: Full runtime (wheel + requirements + plugins + startup)
+      # ------------------------------------------------------------------------
+      - name: Deploy full runtime (prod)
+        if: ${{ inputs.deploy_scope == 'full' }}
         env:
           MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
         run: |
@@ -58,8 +92,10 @@ jobs:
 
       # ------------------------------------------------------------------------
       # MWAA refresh
+      # - Needed for requirements/plugins/startup changes to take effect.
       # ------------------------------------------------------------------------
       - name: Trigger MWAA environment update (prod)
+        if: ${{ inputs.deploy_scope == 'full' }}
         run: |
           aws mwaa update-environment \
             --name "${{ vars.MWAA_ENV_NAME }}" \
