@@ -38,3 +38,9 @@ output "iam_terraform_execution_role_arn" {
   description = "IAM stack terraform execution role ARN (from remote state)."
   value       = data.terraform_remote_state.iam.outputs.terraform_execution_role_arn
 }
+
+
+output "db_instance_identifier" {
+  description = "RDS DB instance identifier (DBInstanceIdentifier)."
+  value       = module.rds_postgres.db_instance_identifier
+}

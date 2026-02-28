@@ -98,3 +98,35 @@ variable "db_port" {
   type        = number
   default     = 5432
 }
+
+
+
+variable "multi_az" {
+  description = "Enable Multi-AZ (prod recommended)."
+  type        = bool
+  default     = false
+}
+
+variable "max_allocated_storage_gb" {
+  description = "Storage autoscaling max (0 disables)."
+  type        = number
+  default     = 0
+}
+
+variable "performance_insights_enabled" {
+  description = "Enable Performance Insights."
+  type        = bool
+  default     = false
+}
+
+variable "performance_insights_retention_period" {
+  description = "Performance Insights retention (7 or 731)."
+  type        = number
+  default     = 7
+}
+
+variable "monitoring_interval_seconds" {
+  description = "Enhanced monitoring interval (0 disables)."
+  type        = number
+  default     = 0
+}

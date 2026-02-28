@@ -32,3 +32,9 @@ output "db_name" {
   description = "Database name."
   value       = aws_db_instance.this.db_name
 }
+
+
+output "db_instance_identifier" {
+  description = "RDS DB instance identifier (DBInstanceIdentifier)."
+  value       = aws_db_instance.this.id
+}

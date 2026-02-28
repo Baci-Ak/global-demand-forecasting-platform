@@ -47,3 +47,47 @@ variable "port" {
   type        = number
   default     = 5439
 }
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# Cost guardrails (dev)
+# ------------------------------------------------------------------------------
+
+variable "enable_usage_limits" {
+  description = "Enable Redshift Serverless usage limits."
+  type        = bool
+  default     = true
+}
+
+variable "usage_limit_rpu_hours_per_day" {
+  description = "Daily RPU-hours cap (null disables)."
+  type        = number
+  default     = null
+}
+
+variable "usage_limit_rpu_hours_per_week" {
+  description = "Weekly RPU-hours cap (null disables)."
+  type        = number
+  default     = null
+}
+
+variable "usage_limit_rpu_hours_per_month" {
+  description = "Monthly RPU-hours cap (null disables)."
+  type        = number
+  default     = 200
+}
+
+variable "usage_limit_breach_action" {
+  description = "Breach action: 'log' (dev) or 'deactivate' (prod)."
+  type        = string
+  default     = "log"
+}
+
+variable "enable_log_exports" {
+  description = "Enable Redshift Serverless user activity logging."
+  type        = bool
+  default     = true
+}

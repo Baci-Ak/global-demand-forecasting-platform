@@ -57,3 +57,60 @@ variable "port" {
   type        = number
   default     = 5439
 }
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# Cost guardrails (Serverless usage limits)
+# ------------------------------------------------------------------------------
+
+variable "enable_usage_limits" {
+  description = "If true, apply Redshift Serverless usage limits to prevent runaway cost."
+  type        = bool
+  default     = true
+}
+
+variable "usage_limit_rpu_hours_per_day" {
+  description = "Max RPU-hours per day for the workgroup. Null disables this limit."
+  type        = number
+  default     = null
+}
+
+variable "usage_limit_rpu_hours_per_week" {
+  description = "Max RPU-hours per week for the workgroup. Null disables this limit."
+  type        = number
+  default     = null
+}
+
+variable "usage_limit_rpu_hours_per_month" {
+  description = "Max RPU-hours per month for the workgroup. Null disables this limit."
+  type        = number
+  default     = null
+}
+
+variable "usage_limit_breach_action" {
+  description = "Action when limit is breached. Valid values: 'log' or 'deactivate'."
+  type        = string
+  default     = "log"
+
+  validation {
+    condition     = contains(["log", "deactivate"], var.usage_limit_breach_action)
+    error_message = "usage_limit_breach_action must be 'log' or 'deactivate'."
+  }
+}
+
+
+
+# ------------------------------------------------------------------------------
+# Logging (CloudWatch log exports)
+# ------------------------------------------------------------------------------
+
+variable "enable_log_exports" {
+  description = "Enable Redshift Serverless CloudWatch log exports."
+  type        = bool
+  default     = true
+}

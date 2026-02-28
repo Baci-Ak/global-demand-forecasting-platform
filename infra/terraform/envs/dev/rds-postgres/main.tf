@@ -79,4 +79,15 @@ module "rds_postgres" {
   ]
 
 
+
+  multi_az = var.multi_az
+
+  max_allocated_storage_gb = var.max_allocated_storage_gb
+
+  performance_insights_enabled          = var.performance_insights_enabled
+  performance_insights_retention_period = var.performance_insights_retention_period
+
+  monitoring_interval_seconds = var.monitoring_interval_seconds
+
+
 }

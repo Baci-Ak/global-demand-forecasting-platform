@@ -123,3 +123,40 @@ variable "additional_trusted_source_sg_ids" {
   type        = list(string)
   default     = []
 }
+
+
+
+
+# ------------------------------------------------------------------------------
+# Production-grade / ops knobs
+# ------------------------------------------------------------------------------
+
+variable "multi_az" {
+  description = "Enable Multi-AZ for higher availability (recommended in prod)."
+  type        = bool
+  default     = false
+}
+
+variable "max_allocated_storage_gb" {
+  description = "Enable storage autoscaling up to this size (0 disables)."
+  type        = number
+  default     = 0
+}
+
+variable "performance_insights_enabled" {
+  description = "Enable RDS Performance Insights."
+  type        = bool
+  default     = false
+}
+
+variable "performance_insights_retention_period" {
+  description = "Performance Insights retention in days (7 or 731)."
+  type        = number
+  default     = 7
+}
+
+variable "monitoring_interval_seconds" {
+  description = "Enhanced monitoring interval in seconds (0 disables)."
+  type        = number
+  default     = 0
+}

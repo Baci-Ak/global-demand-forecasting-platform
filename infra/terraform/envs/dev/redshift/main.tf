@@ -58,4 +58,16 @@ module "redshift" {
     data.terraform_remote_state.ssm_jumphost.outputs.jumphost_security_group_id,
     data.terraform_remote_state.network.outputs.workloads_security_group_id,
   ]
+
+
+
+  # Redshift Serverless usage limits (cost cap)
+  enable_usage_limits             = var.enable_usage_limits
+  usage_limit_rpu_hours_per_day   = var.usage_limit_rpu_hours_per_day
+  usage_limit_rpu_hours_per_week  = var.usage_limit_rpu_hours_per_week
+  usage_limit_rpu_hours_per_month = var.usage_limit_rpu_hours_per_month
+  usage_limit_breach_action       = var.usage_limit_breach_action
+
+
+  enable_log_exports = var.enable_log_exports
 }

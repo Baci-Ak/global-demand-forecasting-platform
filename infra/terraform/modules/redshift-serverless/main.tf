@@ -60,6 +60,14 @@ resource "aws_redshiftserverless_workgroup" "this" {
   subnet_ids         = var.subnet_ids
   security_group_ids = [aws_security_group.redshift.id]
 
+
+  # User activity logging (Serverless-supported)
+  # Note: Serverless does NOT support classic "log_exports" lists like provisioned clusters.
+  config_parameter {
+    parameter_key   = "enable_user_activity_logging"
+    parameter_value = var.enable_log_exports ? "true" : "false"
+  }
+
   tags = {
     Name = "${var.project_name}-${var.environment}-redshift-wg"
   }
@@ -107,4 +115,46 @@ resource "aws_iam_role_policy" "redshift_copy_s3_policy" {
       }
     ]
   })
+}
+
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# Usage limits (cost guardrails)
+# - These limits protect you from accidental runaway usage.
+# - Use 'log' first in dev to observe; use 'deactivate' in prod for hard-stop.
+# ------------------------------------------------------------------------------
+
+resource "aws_redshiftserverless_usage_limit" "daily_rpu_hours" {
+  count = var.enable_usage_limits && var.usage_limit_rpu_hours_per_day != null ? 1 : 0
+
+  resource_arn  = aws_redshiftserverless_workgroup.this.arn
+  usage_type    = "serverless-compute"
+  period        = "daily"
+  amount        = var.usage_limit_rpu_hours_per_day
+  breach_action = var.usage_limit_breach_action
+}
+
+resource "aws_redshiftserverless_usage_limit" "weekly_rpu_hours" {
+  count = var.enable_usage_limits && var.usage_limit_rpu_hours_per_week != null ? 1 : 0
+
+  resource_arn  = aws_redshiftserverless_workgroup.this.arn
+  usage_type    = "serverless-compute"
+  period        = "weekly"
+  amount        = var.usage_limit_rpu_hours_per_week
+  breach_action = var.usage_limit_breach_action
+}
+
+resource "aws_redshiftserverless_usage_limit" "monthly_rpu_hours" {
+  count = var.enable_usage_limits && var.usage_limit_rpu_hours_per_month != null ? 1 : 0
+
+  resource_arn  = aws_redshiftserverless_workgroup.this.arn
+  usage_type    = "serverless-compute"
+  period        = "monthly"
+  amount        = var.usage_limit_rpu_hours_per_month
+  breach_action = var.usage_limit_breach_action
 }

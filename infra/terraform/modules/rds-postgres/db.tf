@@ -42,6 +42,18 @@ resource "aws_db_instance" "this" {
   # Minor version upgrades can be enabled in dev; review for production.
   auto_minor_version_upgrade = true
 
+  multi_az = var.multi_az
+
+  # Storage autoscaling (recommended in prod to avoid outages)
+  max_allocated_storage = var.max_allocated_storage_gb > 0 ? var.max_allocated_storage_gb : null
+
+  # Performance Insights (great for debugging; cost-aware defaults)
+  performance_insights_enabled          = var.performance_insights_enabled
+  performance_insights_retention_period = var.performance_insights_enabled ? var.performance_insights_retention_period : null
+
+  # Enhanced monitoring (optional; cost-aware)
+  monitoring_interval = var.monitoring_interval_seconds
+
   tags = {
     Name = "${var.project_name}-${var.environment}-audit-postgres"
   }
