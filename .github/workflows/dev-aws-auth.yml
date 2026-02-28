@@ -1,12 +1,18 @@
-name: Dev - AWS Auth Test
-#~#
+name: Dev - Deploy MWAA Artifacts
+
 on:
   push:
     branches:
       - dev
+    paths:
+      - "orchestration/airflow/dags/**"
+      - "orchestration/airflow/plugins/**"
+      - "orchestration/airflow/startup/**"
+      - "docker/airflow/requirements-mwaa.txt"
+      - "Makefile"
 
 jobs:
-  auth-test:
+  deploy:
     runs-on: ubuntu-latest
     environment: dev
 
@@ -18,25 +24,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug OIDC token claims (print sub/aud)
-        shell: bash
-        run: |
-          echo "Requesting OIDC token..."
-          TOKEN_JSON=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
-          TOKEN=$(echo "$TOKEN_JSON" | python -c "import sys, json; print(json.load(sys.stdin)['value'])")
-
-          # Decode JWT payload (middle part) without jq
-          PAYLOAD=$(echo "$TOKEN" | cut -d '.' -f2 | tr '_-' '/+' | awk '{padding=4-length($0)%4; if(padding<4) printf "%s", $0 substr("====",1,padding); else printf "%s",$0}' | base64 -d 2>/dev/null || true)
-
-          echo "OIDC payload:"
-          echo "$PAYLOAD"
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Upload DAGs / requirements / plugins / startup to S3 (dev)
+        env:
+          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+          MWAA_DAG_PREFIX: airflow/dags
+          MWAA_REQ_PREFIX: airflow/requirements
+          MWAA_PLUGINS_PREFIX: airflow/plugins
+          MWAA_STARTUP_PREFIX: airflow/startup
+        run: |
+          make mwaa-upload-all
+
+      - name: Trigger MWAA environment refresh (dev)
+        run: |
+          aws mwaa update-environment \
+            --name "${{ vars.MWAA_ENV_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"
