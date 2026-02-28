@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - dev
-    paths:
-      - "orchestration/airflow/dags/**"
-      - "orchestration/airflow/plugins/**"
-      - "orchestration/airflow/startup/**"
-      - "docker/airflow/requirements-mwaa.txt"
-      - "Makefile"
 
 jobs:
   deploy:
