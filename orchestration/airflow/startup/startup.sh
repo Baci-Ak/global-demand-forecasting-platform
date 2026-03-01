@@ -105,7 +105,7 @@ pip install "${WHEEL_TMP_PATH}/${WHEEL_FILENAME}"
 # ------------------------------------------------------------------------------
 DBT_VENV="/usr/local/airflow/dbt_venv"
 DBT_BIN="${DBT_VENV}/bin/dbt"
-ALEMBIC_BIN="${DBT_VENV}/bin/alembic"
+
 
 echo "[startup] Setting up dbt venv at ${DBT_VENV} ..."
 
@@ -118,10 +118,11 @@ fi
 "${DBT_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
 
 # Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env)
-"${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0" "alembic==1.18.1"
+"${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0"
 
 # Verify
 "${DBT_BIN}" --version
+
 
 
 # ------------------------------------------------------------------------------
@@ -138,15 +139,12 @@ export REDSHIFT_PASSWORD='${REDSHIFT_PASSWORD}'
 export REDSHIFT_DBNAME='${REDSHIFT_DBNAME}'
 export REDSHIFT_IAM_ROLE_ARN='${REDSHIFT_IAM_ROLE_ARN}'
 export BRONZE_BUCKET='${BRONZE_BUCKET}'
-export ALEMBIC_S3_URI='${ALEMBIC_S3_URI}'
-export AUDIT_SCHEMA='${AUDIT_SCHEMA}'
 export KAGGLE_USERNAME='${KAGGLE_USERNAME}'
 export KAGGLE_API_TOKEN='${KAGGLE_API_TOKEN}'
 export M5_COMPETITION='${M5_COMPETITION}'
 export STAGING_SCHEMA='${STAGING_SCHEMA}'
 export DBT_TARGET='${DBT_TARGET}'
 export DBT_THREADS='${DBT_THREADS}'
-export ALEMBIC_BIN='${ALEMBIC_BIN}'
 export DBT_BIN='${DBT_BIN}'
 EOF
 

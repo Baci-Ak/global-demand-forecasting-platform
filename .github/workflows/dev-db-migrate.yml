@@ -9,6 +9,7 @@
 # Design
 # - Uses GitHub OIDC to assume AWS role (no static AWS keys).
 # - DSN is pulled from AWS Secrets Manager via Makefile target `aws-db-upgrade`.
+# - requires public network
 # ==============================================================================
 
 name: Dev - DB Migrate (Audit DB)
