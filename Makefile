@@ -324,7 +324,6 @@ MWAA_REQ_PREFIX       ?= airflow/requirements
 MWAA_PLUGINS_PREFIX   ?= airflow/plugins
 MWAA_STARTUP_PREFIX   ?= airflow/startup
 MWAA_WHEEL_PREFIX     ?= airflow/packages
-MWAA_ALEMBIC_PREFIX ?= airflow/startup/alembic
 
 
 MWAA_PLUGINS_ZIP := .build/plugins.zip
@@ -369,17 +368,6 @@ mwaa-upload-all: mwaa-upload-dags mwaa-upload-requirements mwaa-upload-plugins m
 # ==============================================================================
 
 
-
-.PHONY: mwaa-upload-alembic
-
-mwaa-upload-alembic:
-	aws s3 cp alembic.ini s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic.ini
-	aws s3 sync alembic s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/alembic \
-	  --delete \
-	  --exclude "__pycache__/*" \
-	  --exclude "*.pyc" \
-	  --exclude ".DS_Store"
-	@echo "✅ Uploaded Alembic -> s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/"
 
 
 
@@ -460,7 +448,6 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@$(MAKE) mwaa-upload-requirements
 	@$(MAKE) mwaa-upload-plugins
 	@$(MAKE) mwaa-upload-startup
-	@$(MAKE) mwaa-upload-alembic
 	@$(MAKE) mwaa-build-wheel
 	@echo ""
 	@WHEEL="$$(ls -1 dist/*.whl | head -n 1)"; \
@@ -472,7 +459,6 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@echo "  requirements  s3://$(MWAA_DAG_BUCKET)/$(MWAA_REQ_PREFIX)/requirements.txt"
 	@echo "  plugins       s3://$(MWAA_DAG_BUCKET)/$(MWAA_PLUGINS_PREFIX)/plugins.zip"
 	@echo "  startup       s3://$(MWAA_DAG_BUCKET)/$(MWAA_STARTUP_PREFIX)/"
-	@echo "  alembic       s3://$(MWAA_DAG_BUCKET)/$(MWAA_ALEMBIC_PREFIX)/"
 	@echo "  wheel         s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/"
 	@echo ""
 	@echo "Done."
