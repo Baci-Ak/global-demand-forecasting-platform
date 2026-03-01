@@ -117,7 +117,7 @@ fi
 "${DBT_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
 
 # Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env)
-"${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0"
+"${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0" "alembic==1.18.1"
 
 # Verify
 "${DBT_BIN}" --version
