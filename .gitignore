@@ -44,6 +44,8 @@ infra/terraform/**/terraform.tfvars
 # Secrets
 .env
 .env.*
+!.env.example
+!.env.example.*
 *.pem
 *.key
 secrets/
@@ -75,7 +77,6 @@ config/**/__pycache__/
 # ==============================================================================
 # Airflow (local dev runtime)
 # ==============================================================================
-orchestration/airflow/.env
 orchestration/airflow/logs/
 
 
@@ -87,3 +88,4 @@ orchestration/airflow/logs/
 # ------------------------------------------------------------------------------
 infra/vpn/pki/**
 !infra/vpn/pki/README.md
+!infra/terraform/bin/.env.example

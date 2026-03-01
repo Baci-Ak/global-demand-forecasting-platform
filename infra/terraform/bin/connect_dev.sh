@@ -91,7 +91,9 @@ case "$CMD" in
     echo "Keep this terminal open while using the UI."
     echo
 
-    echo "127.0.0.1 ${MWAA_HOST}" | sudo tee -a /etc/hosts >/dev/null
+    if ! grep -qE "^[#[:space:]]*127\.0\.0\.1[[:space:]]+${MWAA_HOST//./\\.}([[:space:]]|\$)" /etc/hosts; then
+        echo "127.0.0.1 ${MWAA_HOST}" | sudo tee -a /etc/hosts >/dev/null
+    fi
     echo "Open:"
     echo "  https://${MWAA_HOST}:${LOCAL_PORT}/"
 

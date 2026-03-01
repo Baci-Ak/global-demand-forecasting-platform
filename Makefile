@@ -413,6 +413,39 @@ tunnel-redshift:
 	@infra/terraform/bin/tunnel_redshift.sh
 
 
+
+
+
+
+# ==============================================================================
+# AWS: SSM tunnels to private resources (standard interface)
+# - Source of truth: SSM Parameter Store (/gdf/<env>/...)
+# - Works for dev/prod by changing ENVIRONMENT=prod
+# ==============================================================================
+
+ENVIRONMENT ?= dev
+
+.PHONY: connect-mwaa connect-postgres connect-redshift connect-mwaa-mac
+
+connect-mwaa:
+	@chmod +x infra/terraform/bin/connect_dev.sh
+	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/connect_dev.sh mwaa
+
+connect-postgres:
+	@chmod +x infra/terraform/bin/connect_dev.sh
+	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/connect_dev.sh postgres
+
+connect-redshift:
+	@chmod +x infra/terraform/bin/connect_dev.sh
+	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/connect_dev.sh redshift
+
+# macOS convenience for MWAA: binds 443 + hosts mapping
+connect-mwaa-mac:
+	@chmod +x infra/terraform/bin/gdf-dev-connect-mwaa-mac.sh
+	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/gdf-dev-connect-mwaa-mac.sh
+
+
+
 # ==============================================================================
 # MWAA (CI deploy helpers)
 # ==============================================================================
