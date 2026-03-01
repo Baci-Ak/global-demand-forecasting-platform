@@ -105,6 +105,7 @@ pip install "${WHEEL_TMP_PATH}/${WHEEL_FILENAME}"
 # ------------------------------------------------------------------------------
 DBT_VENV="/usr/local/airflow/dbt_venv"
 DBT_BIN="${DBT_VENV}/bin/dbt"
+ALEMBIC_BIN="${DBT_VENV}/bin/alembic"
 
 echo "[startup] Setting up dbt venv at ${DBT_VENV} ..."
 
@@ -138,12 +139,14 @@ export REDSHIFT_DBNAME='${REDSHIFT_DBNAME}'
 export REDSHIFT_IAM_ROLE_ARN='${REDSHIFT_IAM_ROLE_ARN}'
 export BRONZE_BUCKET='${BRONZE_BUCKET}'
 export ALEMBIC_S3_URI='${ALEMBIC_S3_URI}'
+export AUDIT_SCHEMA='${AUDIT_SCHEMA}'
 export KAGGLE_USERNAME='${KAGGLE_USERNAME}'
 export KAGGLE_API_TOKEN='${KAGGLE_API_TOKEN}'
 export M5_COMPETITION='${M5_COMPETITION}'
 export STAGING_SCHEMA='${STAGING_SCHEMA}'
 export DBT_TARGET='${DBT_TARGET}'
 export DBT_THREADS='${DBT_THREADS}'
+export ALEMBIC_BIN='${ALEMBIC_BIN}'
 export DBT_BIN='${DBT_BIN}'
 EOF
 
