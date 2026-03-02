@@ -9,7 +9,7 @@
 # - Actions → this workflow → Run workflow
 # - Choose deploy_scope:
 #   - dags-only: sync DAGs only (no MWAA update)
-#   - full: deploy runtime artifacts + wheel, then trigger MWAA update
+#   - full: deploy runtime artifacts + wheel, then trigger MWAA update.
 # ==============================================================================
 
 name: Dev - Deploy to MWAA (manual)
