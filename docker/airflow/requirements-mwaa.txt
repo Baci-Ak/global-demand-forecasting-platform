@@ -1,0 +1,25 @@
+# MWAA requirements.txt
+# ------------------------------------------------------------------------------
+# Purpose
+# - Install only "pipeline extras" that are NOT part of the gdf wheel's core deps.
+# - Avoid re-installing core libs (pydantic/SQLAlchemy/boto3/psycopg2) because that
+#   causes version churn after startup.
+#
+# Notes
+# - Keep versions unpinned here to respect MWAA/Airflow constraints.
+# - Pin versions in the gdf wheel (pyproject.toml) if you want reproducibility.
+# ------------------------------------------------------------------------------
+
+python-dotenv
+
+kaggle
+pandas
+pyarrow
+tqdm
+
+great_expectations
+
+# Optional (only if your MWAA tasks import it):
+# sqlalchemy-redshift
+#dbt-core
+#dbt-redshift

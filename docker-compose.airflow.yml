@@ -1,0 +1,160 @@
+# ==============================================================================
+# docker-compose.airflow.yml (Repo root)
+# ==============================================================================
+#
+# Purpose
+# - Run Apache Airflow locally for orchestration development.
+# - Uses a dedicated Postgres container for Airflow metadata (NOT your app/audit DB).
+#
+# Key design choices (local-first, production-shaped)
+# - Separate containers: webserver + scheduler + metadata Postgres
+# - LocalExecutor for simplicity (no Celery/Redis needed)
+# - All runtime artifacts live under: orchestration/airflow/
+# - Config/secrets come from the repo-root .env (per your preference)
+#
+# How paths work
+# - This compose file is in the repo root.
+# - Host mounts below reference folders under orchestration/airflow/
+# - We also mount the repo root into the Airflow containers at /opt/project so DAG
+#   tasks can run your project modules and dbt commands.
+#
+# YAML anchors (x-airflow-common)
+# - Compose gets repetitive; we define shared settings once and reuse them for
+#   init/scheduler/webserver using:
+#     &airflow-common (anchor) and <<: *airflow-common (merge)
+# ==============================================================================
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  image: gdf-airflow:2.9.3
+
+  # env_file:
+  #   - .env
+  environment:
+    # --------------------------------------------------------------------------
+    # Airflow config (non-secret)
+    # --------------------------------------------------------------------------
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+
+    # --------------------------------------------------------------------------
+    # Project runtime config needed by DAG tasks (make targets call Python code)
+    # We pass ONLY what the pipeline needs (explicit > implicit).
+    # --------------------------------------------------------------------------
+    # S3 / Bronze
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    AWS_REGION: ${AWS_REGION}
+    MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+    BRONZE_BUCKET: ${BRONZE_BUCKET}
+
+    # Kaggle ingestion
+    KAGGLE_USERNAME: ${KAGGLE_USERNAME}
+    KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN}
+    M5_COMPETITION: ${M5_COMPETITION}
+    M5_DESTINATION: ${M5_DESTINATION}
+    M5_SOURCE_NAME: ${M5_SOURCE_NAME}
+
+    # Audit DB (used by ingestion/DQ audit logging)
+    POSTGRES_DSN: ${POSTGRES_DSN}
+    AUDIT_SCHEMA: ${AUDIT_SCHEMA}
+
+    # Warehouse / Redshift (used by staging loaders + dbt)
+    WAREHOUSE_DSN: ${WAREHOUSE_DSN}
+    REDSHIFT_IAM_ROLE_ARN: ${REDSHIFT_IAM_ROLE_ARN}
+    DBT_TARGET: ${DBT_TARGET}
+    DBT_THREADS: ${DBT_THREADS}
+
+    # Ensure tasks can import your repo modules reliably
+    PYTHONPATH: /opt/project
+
+
+  volumes:
+    # Airflow assets live in the repo (reviewable + versioned)
+    - ./orchestration/airflow/dags:/opt/airflow/dags
+    - ./orchestration/airflow/plugins:/opt/airflow/plugins
+    - ./orchestration/airflow/include:/opt/airflow/include
+    - ./orchestration/airflow/logs:/opt/airflow/logs
+
+    # Mount repo root so operators can run your project code (python/dbt)
+    - ./:/opt/project
+
+  working_dir: /opt/project
+
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+
+
+services:
+  # ----------------------------------------------------------------------------
+  # Airflow metadata database (dedicated Postgres)
+  # ----------------------------------------------------------------------------
+  airflow-postgres:
+    image: postgres:15
+    container_name: gdf_airflow_postgres
+    environment:
+      POSTGRES_DB: ${AIRFLOW_DB_NAME}
+      POSTGRES_USER: ${AIRFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+    ports:
+      # Optional: expose to host for debugging (Airflow uses the docker network)
+      - "${AIRFLOW_DB_PORT}:5432"
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AIRFLOW_DB_USER} -d ${AIRFLOW_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # ----------------------------------------------------------------------------
+  # One-time init container
+  # - migrates Airflow metadata DB
+  # - creates an admin user for local UI access
+  # ----------------------------------------------------------------------------
+  airflow-init:
+    container_name: gdf_airflow_init
+    <<: *airflow-common
+    command: >
+      bash -c "airflow db migrate && airflow users create
+      --username '${AIRFLOW_ADMIN_USERNAME}'
+      --password '${AIRFLOW_ADMIN_PASSWORD}'
+      --firstname 'Admin'
+      --lastname 'User'
+      --role 'Admin'
+      --email '${AIRFLOW_ADMIN_EMAIL}'"
+    restart: "no"
+
+
+  # ----------------------------------------------------------------------------
+  # Scheduler
+  # ----------------------------------------------------------------------------
+  airflow-scheduler:
+    container_name: gdf_airflow_scheduler
+    <<: *airflow-common
+    command: airflow scheduler
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # ----------------------------------------------------------------------------
+  # Webserver (Airflow UI)
+  # ----------------------------------------------------------------------------
+  airflow-webserver:
+    container_name: gdf_airflow_webserver
+    <<: *airflow-common
+    command: airflow webserver
+    restart: unless-stopped
+    ports:
+      - "${AIRFLOW_WEBSERVER_PORT}:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+
+volumes:
+  # Persists Airflow metadata across restarts (local dev)
+  airflow_postgres_data:

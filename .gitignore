@@ -12,7 +12,9 @@ __pycache__/
 .mypy_cache/
 .venv/
 venv/
-env/
+#env/
+.venv-dbt/
+venv-dbt/
 *.egg-info/
 dist/
 build/
@@ -30,14 +32,20 @@ local_data/
 artifacts/
 
 # Terraform
-infra/.terraform/
-infra/*.tfstate
-infra/*.tfstate.*
-infra/.terraform.lock.hcl
+# Terraform (ignore state + local caches only)
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform.lock.hcl
+infra/terraform/**/terraform.tfvars
+
+
 
 # Secrets
 .env
 .env.*
+!.env.example
+!.env.example.*
 *.pem
 *.key
 secrets/
@@ -47,3 +55,37 @@ secrets/
 hello.txt
 local_smoke.txt
 
+test.ipynb
+
+alembic/**/*.pyc
+alembic/**/__pycache__/
+
+database/**/*.pyc
+database/**/__pycache__/
+
+config/**/*.pyc
+config/**/__pycache__/
+
+.venv-dbt/
+
+
+
+
+
+
+
+# ==============================================================================
+# Airflow (local dev runtime)
+# ==============================================================================
+orchestration/airflow/logs/
+
+
+
+# ------------------------------------------------------------------------------
+# VPN PKI (EasyRSA)
+# - Keep PKI workspace local; never commit private keys or generated material.
+# - We will commit ONLY public artifacts explicitly when needed.
+# ------------------------------------------------------------------------------
+infra/vpn/pki/**
+!infra/vpn/pki/README.md
+!infra/terraform/bin/.env.example

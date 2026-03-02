@@ -1,0 +1,131 @@
+# ------------------------------------------------------------------------------
+# CD / Pipeline Workflow (No Terraform)
+#
+# What this workflow is
+# - This is the "CD" side of CI/CD for the data platform:
+#   it runs the end-to-end pipeline in a clean GitHub runner.
+#
+# When it runs
+# - On pushes to the `dev` branch.
+#
+# What it runs
+# - `make warehouse-refresh`
+#   which executes:
+#     ingest -> dq -> stage -> silver -> gold
+#
+# Secrets / Configuration
+# - This workflow DOES NOT read .env.
+# - It receives configuration from GitHub Secrets (repo settings).
+#
+# dbt profile strategy (clean + reproducible)
+# - We do NOT rely on ~/.dbt/profiles.yml in CI.
+# - We commit a repo-owned profile at: warehouse/.dbt/profiles.yml
+# - That profile reads connection values from environment variables.
+#
+# Critical production detail
+# - The audit DB (Postgres) must have its schema/tables created before ingestion.
+# - We run Alembic migrations via `make db-upgrade` at the start of the job.
+# ------------------------------------------------------------------------------
+
+name: pipeline
+# if wants to use the ci/cd for deployment to the aws platform
+#-------------
+# on:
+#   push:
+#     branches: ["dev"]
+
+on:
+  workflow_dispatch:
+    #--------------------
+permissions:
+  contents: read
+
+jobs:
+  run-pipeline:
+    name: run warehouse-refresh (dev)
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1) Checkout repository
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2) Set up Python runtime
+      # -----------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # -----------------------------------------------------------------------
+      # 3) Install dependencies
+      # -----------------------------------------------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dbt.txt
+
+      # -----------------------------------------------------------------------
+      # 4) Ensure audit schema/tables exist (RDS)
+      #
+      # Why:
+      # - Ingestion/DQ writes audit records.
+      # - A fresh RDS instance has no audit schema/tables until migrations run.
+      # -----------------------------------------------------------------------
+      - name: Migrate audit DB (make db-upgrade)
+        env:
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+          AUDIT_SCHEMA: ${{ secrets.AUDIT_SCHEMA }}
+        run: |
+          make db-upgrade
+
+      # -----------------------------------------------------------------------
+      # 5) Run the canonical pipeline entrypoint
+      # -----------------------------------------------------------------------
+      - name: Run warehouse refresh
+        env:
+          # -----------------------------
+          # Audit DB (Postgres RDS)
+          # -----------------------------
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+          AUDIT_SCHEMA: ${{ secrets.AUDIT_SCHEMA }}
+
+          # -----------------------------
+          # AWS (S3 + boto3)
+          # -----------------------------
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BRONZE_BUCKET: ${{ secrets.BRONZE_BUCKET }}
+
+          # -----------------------------
+          # Warehouse (Redshift)
+          # -----------------------------
+          WAREHOUSE_DSN: ${{ secrets.WAREHOUSE_DSN }}
+          REDSHIFT_IAM_ROLE_ARN: ${{ secrets.REDSHIFT_IAM_ROLE_ARN }}
+
+          # -----------------------------
+          # Kaggle (source ingestion)
+          # -----------------------------
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          M5_COMPETITION: ${{ secrets.M5_COMPETITION }}
+          M5_SOURCE_NAME: ${{ secrets.M5_SOURCE_NAME }}
+          M5_DESTINATION: ${{ secrets.M5_DESTINATION }}
+
+          # -----------------------------
+          # dbt (values consumed by warehouse/.dbt/profiles.yml)
+          # -----------------------------
+          DBT_TARGET: dev
+          REDSHIFT_HOST: ${{ secrets.REDSHIFT_HOST }}
+          REDSHIFT_USER: ${{ secrets.REDSHIFT_USER }}
+          REDSHIFT_PASSWORD: ${{ secrets.REDSHIFT_PASSWORD }}
+          REDSHIFT_PORT: ${{ secrets.REDSHIFT_PORT }}
+          REDSHIFT_DBNAME: ${{ secrets.REDSHIFT_DBNAME }}
+          STAGING_SCHEMA: ${{ secrets.STAGING_SCHEMA }}
+        run: |
+          make warehouse-refresh

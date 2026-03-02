@@ -1,0 +1,72 @@
+# ==============================================================================
+# Dev - Deploy to MWAA (manual)
+# ------------------------------------------------------------------------------
+# Purpose
+# - Deploy MWAA artifacts to dev on demand.
+# - Avoid automatic MWAA environment updates on every commit.
+#
+# Usage
+# - Actions → this workflow → Run workflow
+# - Choose deploy_scope:
+#   - dags-only: sync DAGs only (no MWAA update)
+#   - full: deploy runtime artifacts + wheel, then trigger MWAA update.
+# ==============================================================================
+
+name: Dev - Deploy to MWAA (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "What to deploy"
+        required: true
+        default: "dags-only"
+        type: choice
+        options:
+          - dags-only
+          - full
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install system deps (zip)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: Deploy DAGs only (dev)
+        if: ${{ inputs.deploy_scope == 'dags-only' }}
+        env:
+          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+        run: |
+          make mwaa-upload-dags
+
+      - name: Deploy full runtime (dev)
+        if: ${{ inputs.deploy_scope == 'full' }}
+        env:
+          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+        run: |
+          make mwaa-ci-deploy
+
+      - name: Trigger MWAA environment update (dev)
+        if: ${{ inputs.deploy_scope == 'full' }}
+        run: |
+          aws mwaa update-environment \
+            --name "${{ vars.MWAA_ENV_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"

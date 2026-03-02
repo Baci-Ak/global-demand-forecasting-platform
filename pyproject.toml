@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdf"
+version = "0.1.0"
+description = "Global Demand Forecasting pipelines (ingestion, DQ, warehouse)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "GDF Team" }]
+license-files = ["LICENSE.txt"]
+
+# Keep this lean and deterministic.
+# MWAA installs its own Airflow constraints; we avoid pinning here unless necessary.
+# Put runtime pins in docker/airflow/requirements-mwaa.txt if MWAA needs them.
+dependencies = [
+  "pydantic==2.5.3",
+  "pydantic-settings==2.2.1",
+  "boto3==1.33.13",
+  "SQLAlchemy==1.4.51",
+  "psycopg2-binary==2.9.9",
+]
+
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gdf*", "ingestion*", "quality*", "warehouse*", "database*", "audit_log*", "app_config*"]
+exclude = ["tests*", ".build*", "build*", "dist*"]
+
+[tool.setuptools.package-data]
+# Include non-python files needed at runtime (dbt project, profiles, macros, etc.).
+warehouse = [
+  "dbt_project.yml",
+  ".dbt/**/*",
+  "models/**/*",
+  "macros/**/*",
+  "seeds/**/*",
+  "snapshots/**/*",
+  "analyses/**/*",
+]
+
+[tool.setuptools.exclude-package-data]
+# Never ship build outputs or noisy logs.
+warehouse = ["target/**/*", "logs/**/*"]

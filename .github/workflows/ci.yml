@@ -1,0 +1,132 @@
+# ------------------------------------------------------------------------------
+# CI: Lightweight validation on every PR and on pushes to main/dev
+#
+# Purpose
+# - Fast feedback that the repo installs and dbt project parses correctly.
+#
+# What this CI does
+# - Installs runtime deps (requirements.txt)
+# - Runs a lightweight secret scan
+# - Installs dbt deps (requirements-dbt.txt)
+# - Runs `dbt deps` (optional) + `dbt parse`
+#
+# What this CI intentionally does NOT do
+# - No dbt run/test (requires live warehouse credentials + network access)
+# - No pipeline execution (handled by pipeline.yml on pushes to dev)
+#
+# dbt profiles (production-style)
+# - We DO NOT rely on ~/.dbt/profiles.yml in CI
+# - We standardize on the repo-owned profiles at: warehouse/.dbt/profiles.yml
+# - For parse-only, we provide harmless dummy env vars (no DB connection is made)
+# ------------------------------------------------------------------------------
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "dev"]
+
+permissions:
+  contents: read
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Runtime deps: ensure the app environment resolves
+  # ----------------------------------------------------------------------------
+  python-deps:
+    name: Install runtime deps
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------
+      # Checkout repository code
+      # --------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------
+      # Lightweight secret scan
+      # --------------------------
+      - name: Secret scan (lightweight)
+        run: |
+          ./scripts/secret_scan.sh
+
+      # --------------------------
+      # Setup Python runtime
+      # --------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # --------------------------
+      # Install runtime dependencies
+      # --------------------------
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+  # ----------------------------------------------------------------------------
+  # dbt: Static project checks (fast, no DB required)
+  # ----------------------------------------------------------------------------
+  dbt-parse:
+    name: dbt deps + parse (no DB)
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------
+      # Checkout repository code
+      # --------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------
+      # Setup Python runtime
+      # --------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # --------------------------
+      # Install dbt dependencies (separate file)
+      # --------------------------
+      - name: Install dbt dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dbt.txt
+
+      # --------------------------
+      # Install dbt packages (optional)
+      # --------------------------
+      - name: dbt deps (optional)
+        working-directory: warehouse
+        run: |
+          dbt deps || true
+
+      # --------------------------
+      # Parse dbt project
+      #
+      # Note:
+      # - dbt requires a profile file to exist.
+      # - dbt parse does NOT need a live database connection.
+      # - We point dbt at the repo-owned profile directory.
+      #
+      # Dummy env vars are provided only to satisfy env_var(...) calls.
+      # --------------------------
+      - name: dbt parse
+        working-directory: warehouse
+        env:
+          DBT_PROFILES_DIR: .dbt
+
+          # Dummy values: parse-only, no DB connection.
+          REDSHIFT_HOST: dummy
+          REDSHIFT_USER: dummy
+          REDSHIFT_PASSWORD: dummy
+          REDSHIFT_PORT: "5439"
+          REDSHIFT_DBNAME: dummy
+          STAGING_SCHEMA: dummy
+        run: |
+          dbt parse --profiles-dir .dbt
