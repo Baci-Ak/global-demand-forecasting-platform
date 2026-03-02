@@ -1,0 +1,69 @@
+# ==============================================================================
+# Terraform - Plan (PR)
+# ==============================================================================
+#
+# Purpose
+# - On every Pull Request, run Terraform plan for ALL stacks.
+# - No applies. No destroys.
+# - Uses GitHub OIDC to assume AWS roles (no static AWS keys).
+#
+# Notes
+# - This workflow assumes each env has a working orchestration Makefile:
+#     infra/terraform/envs/dev/Makefile  -> plan-all
+#     infra/terraform/envs/prod/Makefile -> plan-all
+# - For prod plan on PRs, use a dedicated "plan" role that does NOT require
+#   environment approvals (avoid blocking PR checks).
+# ==============================================================================
+
+name: Terraform - Plan (PR)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  plan:
+    name: Plan (${{ matrix.env }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [dev, prod]
+
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------------
+      # Terraform CLI
+      # ------------------------------------------------------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+
+      # ------------------------------------------------------------------------
+      # AWS Auth (OIDC)
+      # - Use dedicated PLAN roles (recommended) so PR checks don't require manual approval.
+      # ------------------------------------------------------------------------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ matrix.env == 'dev' && secrets.AWS_ROLE_ARN_DEV_PLAN || secrets.AWS_ROLE_ARN_PROD_PLAN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ------------------------------------------------------------------------
+      # Run plan-all for the environment
+      # ------------------------------------------------------------------------
+      - name: Terraform plan-all (${{ matrix.env }})
+        working-directory: infra/terraform/envs/${{ matrix.env }}
+        run: |
+          make plan-all

@@ -1,112 +1,13 @@
 .
-├── ./.build
-│   ├── ./.build/mwaa
-│   │   ├── ./.build/mwaa/app_config
-│   │   │   ├── ./.build/mwaa/app_config/__init__.py
-│   │   │   └── ./.build/mwaa/app_config/config.py
-│   │   ├── ./.build/mwaa/audit_log
-│   │   │   ├── ./.build/mwaa/audit_log/__init__.py
-│   │   │   ├── ./.build/mwaa/audit_log/dq_audit_logger.py
-│   │   │   └── ./.build/mwaa/audit_log/ingestion_audit_logger.py
-│   │   ├── ./.build/mwaa/dags
-│   │   │   ├── ./.build/mwaa/dags/00_smoke_test.py
-│   │   │   ├── ./.build/mwaa/dags/01_minimal_test.py
-│   │   │   ├── ./.build/mwaa/dags/10_m5_full_refresh_mwaa.py
-│   │   │   └── ./.build/mwaa/dags/10_m5_full_refresh.py
-│   │   ├── ./.build/mwaa/database
-│   │   │   ├── ./.build/mwaa/database/__init__.py
-│   │   │   ├── ./.build/mwaa/database/database.py
-│   │   │   └── ./.build/mwaa/database/models.py
-│   │   ├── ./.build/mwaa/gdf
-│   │   │   ├── ./.build/mwaa/gdf/__init__.py
-│   │   │   ├── ./.build/mwaa/gdf/app_config.py
-│   │   │   ├── ./.build/mwaa/gdf/audit_log.py
-│   │   │   ├── ./.build/mwaa/gdf/database.py
-│   │   │   ├── ./.build/mwaa/gdf/ingestion.py
-│   │   │   ├── ./.build/mwaa/gdf/quality.py
-│   │   │   └── ./.build/mwaa/gdf/warehouse.py
-│   │   ├── ./.build/mwaa/include
-│   │   │   └── ./.build/mwaa/include/gdf_import_check.py
-│   │   ├── ./.build/mwaa/ingestion
-│   │   │   ├── ./.build/mwaa/ingestion/__init__.py
-│   │   │   ├── ./.build/mwaa/ingestion/bronze_io.py
-│   │   │   ├── ./.build/mwaa/ingestion/ingestion_queries.py
-│   │   │   ├── ./.build/mwaa/ingestion/kaggle_client.py
-│   │   │   ├── ./.build/mwaa/ingestion/m5_ingestion.py
-│   │   │   └── ./.build/mwaa/ingestion/s3_client.py
-│   │   ├── ./.build/mwaa/plugins
-│   │   │   └── ./.build/mwaa/plugins/gdf_plugin.py
-│   │   ├── ./.build/mwaa/pyproject.toml
-│   │   ├── ./.build/mwaa/quality
-│   │   │   ├── ./.build/mwaa/quality/__init__.py
-│   │   │   ├── ./.build/mwaa/quality/run_calendar_dq.py
-│   │   │   ├── ./.build/mwaa/quality/run_sales_train_validation_dq.py
-│   │   │   ├── ./.build/mwaa/quality/run_sell_prices_dq.py
-│   │   │   └── ./.build/mwaa/quality/specs
-│   │   │       ├── ./.build/mwaa/quality/specs/m5_calendar.py
-│   │   │       ├── ./.build/mwaa/quality/specs/m5_sales_train_validation.py
-│   │   │       ├── ./.build/mwaa/quality/specs/m5_sell_prices.py
-│   │   │       └── ./.build/mwaa/quality/specs/registry.py
-│   │   ├── ./.build/mwaa/README.md
-│   │   ├── ./.build/mwaa/requirements-mwaa.txt
-│   │   ├── ./.build/mwaa/requirements.txt
-│   │   └── ./.build/mwaa/warehouse
-│   │       ├── ./.build/mwaa/warehouse/__init__.py
-│   │       ├── ./.build/mwaa/warehouse/.dbt
-│   │       │   ├── ./.build/mwaa/warehouse/.dbt/.user.yml
-│   │       │   └── ./.build/mwaa/warehouse/.dbt/profiles.yml
-│   │       ├── ./.build/mwaa/warehouse/.gitignore
-│   │       ├── ./.build/mwaa/warehouse/analyses
-│   │       │   └── ./.build/mwaa/warehouse/analyses/.gitkeep
-│   │       ├── ./.build/mwaa/warehouse/dbt_packages
-│   │       ├── ./.build/mwaa/warehouse/dbt_project.yml
-│   │       ├── ./.build/mwaa/warehouse/loaders
-│   │       │   ├── ./.build/mwaa/warehouse/loaders/__init__.py
-│   │       │   ├── ./.build/mwaa/warehouse/loaders/load_m5_calendar_to_staging.py
-│   │       │   ├── ./.build/mwaa/warehouse/loaders/load_m5_sales_train_validation_to_staging.py
-│   │       │   └── ./.build/mwaa/warehouse/loaders/load_m5_sell_prices_to_staging.py
-│   │       ├── ./.build/mwaa/warehouse/macros
-│   │       │   ├── ./.build/mwaa/warehouse/macros/.gitkeep
-│   │       │   ├── ./.build/mwaa/warehouse/macros/drop_schema.sql
-│   │       │   ├── ./.build/mwaa/warehouse/macros/generate_schema_name.sql
-│   │       │   └── ./.build/mwaa/warehouse/macros/list_schemas.sql
-│   │       ├── ./.build/mwaa/warehouse/models
-│   │       │   ├── ./.build/mwaa/warehouse/models/example
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/example/my_first_dbt_model.sql
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/example/my_second_dbt_model.sql
-│   │       │   │   └── ./.build/mwaa/warehouse/models/example/schema.yml
-│   │       │   ├── ./.build/mwaa/warehouse/models/gold
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/gold/gold_m5_training_daily.sql
-│   │       │   │   └── ./.build/mwaa/warehouse/models/gold/schema.yml
-│   │       │   ├── ./.build/mwaa/warehouse/models/silver
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/schema.yml
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_calendar.sql
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_sales_with_prices.sql
-│   │       │   │   ├── ./.build/mwaa/warehouse/models/silver/silver_m5_sales.sql
-│   │       │   │   └── ./.build/mwaa/warehouse/models/silver/silver_m5_sell_prices.sql
-│   │       │   ├── ./.build/mwaa/warehouse/models/staging
-│   │       │   │   └── ./.build/mwaa/warehouse/models/staging/_staging_schema_init.sql
-│   │       │   └── ./.build/mwaa/warehouse/models/staging_sources.yml
-│   │       ├── ./.build/mwaa/warehouse/README.md
-│   │       ├── ./.build/mwaa/warehouse/seeds
-│   │       │   └── ./.build/mwaa/warehouse/seeds/.gitkeep
-│   │       ├── ./.build/mwaa/warehouse/snapshots
-│   │       │   └── ./.build/mwaa/warehouse/snapshots/.gitkeep
-│   │       └── ./.build/mwaa/warehouse/tests
-│   │           ├── ./.build/mwaa/warehouse/tests/.gitkeep
-│   │           ├── ./.build/mwaa/warehouse/tests/test_gold_m5_training_daily_grain_unique.sql
-│   │           ├── ./.build/mwaa/warehouse/tests/test_gold_m5_training_daily_sales_non_negative.sql
-│   │           ├── ./.build/mwaa/warehouse/tests/test_sell_price_coverage.sql
-│   │           └── ./.build/mwaa/warehouse/tests/test_silver_m5_sell_prices_pk_unique.sql
-│   ├── ./.build/mwaa-bundle.zip
-│   └── ./.build/plugins.zip
 ├── ./.DS_Store
 ├── ./.env.example
 ├── ./.github
 │   └── ./.github/workflows
 │       ├── ./.github/workflows/ci.yml
-│       ├── ./.github/workflows/dev-sync-secrets-to-aws.yml
-│       └── ./.github/workflows/pipeline.yml
+│       ├── ./.github/workflows/dev-aws-auth.yml
+│       ├── ./.github/workflows/dev-db-migrate.yml
+│       ├── ./.github/workflows/pipeline.yml
+│       └── ./.github/workflows/prod-deploy-mwaa.yml
 ├── ./.gitignore
 ├── ./.venv-dbt
 │   ├── ./.venv-dbt/bin
@@ -241,6 +142,11 @@
 ├── ./docs
 │   ├── ./docs/00_project_local_setup.md
 │   ├── ./docs/01_local_platform_setup.md
+│   ├── ./docs/access
+│   │   ├── ./docs/access/dev-private-access.md
+│   │   ├── ./docs/access/onboarding-checklist.md
+│   │   ├── ./docs/access/prod-private-access.md
+│   │   └── ./docs/access/quick-start.md
 │   ├── ./docs/adr
 │   │   └── ./docs/adr/0001-airflow-runtime.md
 │   ├── ./docs/aws_warehouse_deployment_checklist.md
@@ -265,6 +171,8 @@
 │       ├── ./infra/terraform/.DS_Store
 │       ├── ./infra/terraform/bin
 │       │   ├── ./infra/terraform/bin/.env.example
+│       │   ├── ./infra/terraform/bin/connect_dev.sh
+│       │   ├── ./infra/terraform/bin/gdf-dev-connect-mwaa-mac.sh
 │       │   ├── ./infra/terraform/bin/tunnel_mwaa_ui.sh
 │       │   ├── ./infra/terraform/bin/tunnel_rds_audit.sh
 │       │   └── ./infra/terraform/bin/tunnel_redshift.sh
@@ -283,12 +191,21 @@
 │       │   ├── ./infra/terraform/envs/dev
 │       │   │   ├── ./infra/terraform/envs/dev/.DS_Store
 │       │   │   ├── ./infra/terraform/envs/dev/iam
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/engineers_group.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/main.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/iam/policy_engineer_tunnels.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/providers.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/terraform.tfvars
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/variables.tf
 │       │   │   │   └── ./infra/terraform/envs/dev/iam/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/monitoring
+│       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/main.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/outputs.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/providers.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/ssm_params.tf
+│       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/terraform.tfvars
+│       │   │   │   └── ./infra/terraform/envs/dev/monitoring/variables.tf
 │       │   │   ├── ./infra/terraform/envs/dev/mwaa
 │       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/data.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/mwaa/main.tf
@@ -540,6 +457,7 @@
 │       ├── ./quality/specs/m5_sell_prices.py
 │       └── ./quality/specs/registry.py
 ├── ./README.md
+├── ./requirements-alembic.txt
 ├── ./requirements-dbt.txt
 ├── ./requirements-mwaa.txt
 ├── ./requirements.txt
