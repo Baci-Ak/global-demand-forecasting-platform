@@ -37,7 +37,9 @@ artifacts/
 **/*.tfstate
 **/*.tfstate.*
 **/.terraform.lock.hcl
-infra/terraform/**/terraform.tfvars
+#infra/terraform/**/terraform.tfvars
+# ✅ Allow committing non-secret env tfvars
+!infra/terraform/envs/**/terraform.tfvars
 
 
 
