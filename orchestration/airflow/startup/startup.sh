@@ -38,7 +38,7 @@ WHEEL_TMP_PATH="/tmp"
 echo "[startup] Loading runtime config from S3..."
 
 # Prefer env var injection (dev/prod), fallback keeps current behaviour.
-GDF_RUNTIME_CONF_S3_URI="${GDF_RUNTIME_CONF_S3_URI:-s3://gdf-dev-airflow/airflow/startup/gdf_runtime.conf}"
+GDF_RUNTIME_CONF_S3_URI="${GDF_RUNTIME_CONF_S3_URI:-s3://gdf-prod-airflow/airflow/startup/gdf_runtime.conf}"
 
 aws s3 cp "${GDF_RUNTIME_CONF_S3_URI}" "${RUNTIME_CONF_PATH}"
 chmod 600 "${RUNTIME_CONF_PATH}"
