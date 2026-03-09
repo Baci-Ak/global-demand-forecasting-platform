@@ -12,7 +12,7 @@
 #   - full: deploy runtime artifacts + wheel, then trigger MWAA update.
 # ==============================================================================
 
-name: Dev - Deploy to MWAA (manual)
+name: Dev - authentication (manual)
 
 on:
   workflow_dispatch:

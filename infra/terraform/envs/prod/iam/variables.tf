@@ -25,3 +25,33 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+
+
+# ------------------------------------------------------------------------------
+# CI/CD federated role inputs
+# ------------------------------------------------------------------------------
+variable "github_oidc_provider_arn" {
+  description = "ARN of the GitHub Actions OIDC provider."
+  type        = string
+}
+
+variable "github_oidc_audience" {
+  description = "Audience expected in GitHub OIDC tokens."
+  type        = string
+  default     = "sts.amazonaws.com"
+}
+
+variable "github_repo_owner" {
+  description = "GitHub repository owner/org for OIDC subject matching."
+  type        = string
+}
+
+variable "github_repo_name" {
+  description = "GitHub repository name for OIDC subject matching."
+  type        = string
+}
+
+variable "github_environment_name" {
+  description = "GitHub Actions environment name allowed to assume this role."
+  type        = string
+}
