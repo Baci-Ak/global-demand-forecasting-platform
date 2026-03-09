@@ -164,4 +164,347 @@ models:
         description: "Weekly sell price matched to the sales row (may be null if no price exists for that week/item/store)."
 
 
+# Silver daily weather observations typed and cleaned from staging.weather_daily_raw.
+  - name: silver_weather_daily
+    description: "Silver daily weather observations typed and cleaned from staging.weather_daily_raw."
+    columns:
+      - name: location_id
+        description: "Weather location identifier aligned to M5 geography."
+        data_tests:
+          - not_null
+
+      - name: state_id
+        description: "M5 state identifier used for downstream joins."
+        data_tests:
+          - not_null
+
+      - name: weather_date
+        description: "Observation date for the weather record."
+        data_tests:
+          - not_null
+
+      - name: temperature_2m_max
+        description: "Daily maximum temperature at 2 meters."
+
+      - name: temperature_2m_min
+        description: "Daily minimum temperature at 2 meters."
+
+      - name: precipitation_sum
+        description: "Daily total precipitation."
+
+      - name: wind_speed_10m_max
+        description: "Daily maximum wind speed at 10 meters."
+
+# Daily sales enriched with daily weather by joining on state_id and calendar date.
+  - name: silver_m5_sales_with_weather
+    description: "Daily sales enriched with daily weather by joining on state_id and calendar date."
+    columns:
+      - name: id
+        description: "Series identifier (unique per item/store)."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: state_id
+        description: "State identifier used to join weather."
+        data_tests:
+          - not_null
+
+      - name: d
+        description: "M5 day identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: temperature_2m_max
+        description: "Daily maximum temperature at 2 meters."
+
+      - name: temperature_2m_min
+        description: "Daily minimum temperature at 2 meters."
+
+      - name: precipitation_sum
+        description: "Daily total precipitation."
+
+      - name: wind_speed_10m_max
+        description: "Daily maximum wind speed at 10 meters."
+
+  
+  - name: silver_macro_series
+    description: "Silver macroeconomic time series cleaned and typed from staging.macro_series_raw."
+    columns:
+      - name: series_id
+        description: "Provider series identifier."
+        data_tests:
+          - not_null
+
+      - name: feature_name
+        description: "Stable internal feature name."
+        data_tests:
+          - not_null
+
+      - name: observation_date
+        description: "Date of the macro observation."
+        data_tests:
+          - not_null
+
+      - name: observation_value
+        description: "Typed numeric value of the macro observation."
+
+
+
+  - name: silver_macro_daily_aligned
+    description: "Daily-aligned macroeconomic features carried forward to the M5 sales calendar."
+    columns:
+      - name: date
+        description: "M5 calendar date used for downstream daily joins."
+        data_tests:
+          - not_null
+
+      - name: feature_name
+        description: "Stable internal macro feature name."
+        data_tests:
+          - not_null
+
+      - name: source_observation_date
+        description: "Most recent macro observation date carried forward onto the daily calendar."
+
+      - name: observation_value
+        description: "Macro value aligned to the daily calendar date."
+
+
+  - name: silver_m5_sales_with_macro
+    description: "Daily M5 sales enriched with aligned macroeconomic features by date."
+    columns:
+      - name: id
+        description: "Series identifier (unique per item/store)."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: state_id
+        description: "State identifier."
+        data_tests:
+          - not_null
+
+      - name: d
+        description: "M5 day identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: cpi_all_items
+        description: "Aligned CPI all-items macro feature."
+
+      - name: unemployment_rate
+        description: "Aligned unemployment rate macro feature."
+
+      - name: federal_funds_rate
+        description: "Aligned federal funds rate macro feature."
+
+      - name: nonfarm_payrolls
+        description: "Aligned nonfarm payrolls macro feature."
+
+
+  
+  - name: silver_trends_interest_over_time
+    description: "Silver Google Trends interest-over-time observations cleaned and typed from staging.trends_interest_over_time_raw."
+    columns:
+      - name: feature_name
+        description: "Stable internal Trends feature name."
+        data_tests:
+          - not_null
+
+      - name: trend_date
+        description: "Date of the Trends observation."
+        data_tests:
+          - not_null
+
+      - name: interest_value
+        description: "Typed search-interest value from 0 to 100."
+
+
+  - name: silver_trends_daily_aligned
+    description: "Daily-aligned Google Trends features scoped to the actual M5 sales dates."
+    columns:
+      - name: date
+        description: "M5 sales date used for downstream daily joins."
+        data_tests:
+          - not_null
+
+      - name: feature_name
+        description: "Stable internal Trends feature name."
+        data_tests:
+          - not_null
+
+      - name: source_trend_date
+        description: "Original Trends observation date matched to the sales date."
+
+      - name: interest_value
+        description: "Search-interest value aligned to the daily sales date."
+
+
+  - name: silver_m5_sales_with_trends
+    description: "Daily M5 sales enriched with aligned Google Trends features by date."
+    columns:
+      - name: id
+        description: "Series identifier (unique per item/store)."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: state_id
+        description: "State identifier."
+        data_tests:
+          - not_null
+
+      - name: d
+        description: "M5 day identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: trends_walmart
+        description: "Aligned Google Trends feature for Walmart."
+
+      - name: trends_grocery_store
+        description: "Aligned Google Trends feature for grocery store."
+
+      - name: trends_discount_store
+        description: "Aligned Google Trends feature for discount store."
+
+      - name: trends_cleaning_supplies
+        description: "Aligned Google Trends feature for cleaning supplies."
+
+
+
+
+  - name: silver_m5_sales_with_external_features
+    description: "Unified daily M5 sales model enriched with weather, macro, and Google Trends external features."
+    columns:
+      - name: id
+        description: "Series identifier (unique per item/store)."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: state_id
+        description: "State identifier."
+        data_tests:
+          - not_null
+
+      - name: d
+        description: "M5 day identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: temperature_2m_max
+        description: "Daily maximum temperature at 2 meters."
+
+      - name: temperature_2m_min
+        description: "Daily minimum temperature at 2 meters."
+
+      - name: precipitation_sum
+        description: "Daily total precipitation."
+
+      - name: wind_speed_10m_max
+        description: "Daily maximum wind speed at 10 meters."
+
+      - name: cpi_all_items
+        description: "Aligned CPI all-items macro feature."
+
+      - name: unemployment_rate
+        description: "Aligned unemployment rate macro feature."
+
+      - name: federal_funds_rate
+        description: "Aligned federal funds rate macro feature."
+
+      - name: nonfarm_payrolls
+        description: "Aligned nonfarm payrolls macro feature."
+
+      - name: trends_walmart
+        description: "Aligned Google Trends feature for Walmart."
+
+      - name: trends_grocery_store
+        description: "Aligned Google Trends feature for grocery store."
+
+      - name: trends_discount_store
+        description: "Aligned Google Trends feature for discount store."
+
+      - name: trends_cleaning_supplies
+        description: "Aligned Google Trends feature for cleaning supplies."
+
+
 

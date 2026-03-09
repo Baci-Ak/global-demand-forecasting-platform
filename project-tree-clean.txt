@@ -177,15 +177,26 @@
 │       │   ├── ./infra/terraform/bin/tunnel_rds_audit.sh
 │       │   └── ./infra/terraform/bin/tunnel_redshift.sh
 │       ├── ./infra/terraform/bootstrap
-│       │   └── ./infra/terraform/bootstrap/tfstate
-│       │       ├── ./infra/terraform/bootstrap/tfstate/dynamodb.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/locals.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/outputs.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/policy.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/providers.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/s3.tf
-│       │       ├── ./infra/terraform/bootstrap/tfstate/variables.tf
-│       │       └── ./infra/terraform/bootstrap/tfstate/versions.tf
+│       │   ├── ./infra/terraform/bootstrap/tfstate
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/dynamodb.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/locals.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/outputs.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/policy.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/providers.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/s3.tf
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/terraform.tfvars
+│       │   │   ├── ./infra/terraform/bootstrap/tfstate/variables.tf
+│       │   │   └── ./infra/terraform/bootstrap/tfstate/versions.tf
+│       │   └── ./infra/terraform/bootstrap/tfstate-prod
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/dynamodb.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/locals.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/outputs.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/policy.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/providers.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/s3.tf
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/terraform.tfvars
+│       │       ├── ./infra/terraform/bootstrap/tfstate-prod/variables.tf
+│       │       └── ./infra/terraform/bootstrap/tfstate-prod/versions.tf
 │       ├── ./infra/terraform/envs
 │       │   ├── ./infra/terraform/envs/.DS_Store
 │       │   ├── ./infra/terraform/envs/dev
@@ -199,6 +210,7 @@
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/terraform.tfvars
 │       │   │   │   ├── ./infra/terraform/envs/dev/iam/variables.tf
 │       │   │   │   └── ./infra/terraform/envs/dev/iam/versions.tf
+│       │   │   ├── ./infra/terraform/envs/dev/Makefile
 │       │   │   ├── ./infra/terraform/envs/dev/monitoring
 │       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/main.tf
 │       │   │   │   ├── ./infra/terraform/envs/dev/monitoring/outputs.tf
@@ -255,7 +267,84 @@
 │       │   │       ├── ./infra/terraform/envs/dev/ssm-jumphost/variables.tf
 │       │   │       └── ./infra/terraform/envs/dev/ssm-jumphost/versions.tf
 │       │   └── ./infra/terraform/envs/prod
-│       │       └── ./infra/terraform/envs/prod/s3
+│       │       ├── ./infra/terraform/envs/prod/iam
+│       │       │   ├── ./infra/terraform/envs/prod/iam/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/iam/engineers_group.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/policy_engineer_tunnels.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/iam/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/iam/versions.tf
+│       │       ├── ./infra/terraform/envs/prod/Makefile
+│       │       ├── ./infra/terraform/envs/prod/monitoring
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/remote_state.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/ssm_params.tf
+│       │       │   ├── ./infra/terraform/envs/prod/monitoring/terraform.tfvars
+│       │       │   └── ./infra/terraform/envs/prod/monitoring/variables.tf
+│       │       ├── ./infra/terraform/envs/prod/mwaa
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/data.tf
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/remote_state.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/mwaa/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/mwaa/versions.tf
+│       │       ├── ./infra/terraform/envs/prod/network
+│       │       │   ├── ./infra/terraform/envs/prod/network/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/network/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/network/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/network/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/network/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/network/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/network/versions.tf
+│       │       ├── ./infra/terraform/envs/prod/rds-postgres
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/remote_state.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/secrets.tf
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/rds-postgres/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/rds-postgres/versions.tf
+│       │       ├── ./infra/terraform/envs/prod/redshift
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/remote_state.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/secrets.tf
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/redshift/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/redshift/versions.tf
+│       │       ├── ./infra/terraform/envs/prod/s3
+│       │       │   ├── ./infra/terraform/envs/prod/s3/backend.hcl
+│       │       │   ├── ./infra/terraform/envs/prod/s3/main.tf
+│       │       │   ├── ./infra/terraform/envs/prod/s3/outputs.tf
+│       │       │   ├── ./infra/terraform/envs/prod/s3/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/s3/terraform.tfvars
+│       │       │   ├── ./infra/terraform/envs/prod/s3/variables.tf
+│       │       │   └── ./infra/terraform/envs/prod/s3/versions.tf
+│       │       └── ./infra/terraform/envs/prod/ssm-jumphost
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/backend.hcl
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/iam.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/instance.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/main.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/outputs.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/providers.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/remote_state.hcl
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/security.tf
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/terraform.tfvars
+│       │           ├── ./infra/terraform/envs/prod/ssm-jumphost/variables.tf
+│       │           └── ./infra/terraform/envs/prod/ssm-jumphost/versions.tf
 │       └── ./infra/terraform/modules
 │           ├── ./infra/terraform/modules/mwaa
 │           │   ├── ./infra/terraform/modules/mwaa/data.tf

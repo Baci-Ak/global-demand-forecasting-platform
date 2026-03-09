@@ -244,6 +244,15 @@ download-kaggle:
 ingest-m5:
 	python -c "from ingestion.m5_ingestion import ingest_m5_to_bronze; ingest_m5_to_bronze()"
 
+ingest-weather:
+	python -c "from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()"
+
+ingest-macro:
+	python -c "from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()"
+
+ingest-trends:
+	python -c "from ingestion.trends.trends_ingestion import ingest_trends_to_bronze; ingest_trends_to_bronze()"
+
 dq-calendar:
 	python -m quality.run_calendar_dq
 
@@ -253,7 +262,16 @@ dq-sell-prices:
 dq-sales-train-validation:
 	python -m quality.run_sales_train_validation_dq
 
-dq-all: dq-calendar dq-sell-prices dq-sales-train-validation
+dq-weather-daily:
+	python -m quality.run_weather_daily_dq
+
+dq-macro-series:
+	python -m quality.run_macro_series_dq
+
+dq-trends-interest-over-time:
+	python -m quality.run_trends_interest_over_time_dq
+
+dq-all: dq-calendar dq-sell-prices dq-sales-train-validation dq-weather-daily dq-macro-series dq-trends-interest-over-time
 	@echo "✅ All DQ gates passed"
 
 
@@ -269,8 +287,18 @@ warehouse-load-sell-prices:
 warehouse-load-sales-train-validation:
 	python -m warehouse.loaders.load_m5_sales_train_validation_to_staging
 
-warehouse-stage-all: dbt-init-staging warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation
-	@echo "✅ Staging ready (calendar, sell_prices, sales_train_validation_long)"
+warehouse-load-weather-daily:
+	python -m warehouse.loaders.load_weather_daily_to_staging
+
+warehouse-load-macro-series:
+	python -m warehouse.loaders.load_macro_series_to_staging
+
+warehouse-load-trends-interest-over-time:
+	python -m warehouse.loaders.load_trends_interest_over_time_to_staging
+
+warehouse-stage-all: dbt-init-staging warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation warehouse-load-weather-daily warehouse-load-macro-series warehouse-load-trends-interest-over-time
+	@echo "✅ Staging ready (calendar, sell_prices, sales_train_validation_long, weather_daily, macro_series, trends_interest_over_time)"
+
 
 dbt-debug:
 	cd warehouse && dbt debug --profiles-dir .dbt
@@ -299,9 +327,8 @@ warehouse-silver: warehouse-stage-all dbt-run-silver dbt-test-silver
 warehouse-gold: warehouse-silver dbt-run-gold dbt-test-gold
 	@echo "✅ Gold built + tested"
 
-warehouse-refresh: ingest-m5 dq-all warehouse-gold
+warehouse-refresh: ingest-m5 ingest-weather ingest-macro ingest-trends dq-all warehouse-gold
 	@echo "✅ Full refresh complete (ingest -> dq -> stage -> silver -> gold)"
-
 
 # ==============================================================================
 # AWS helpers
@@ -318,7 +345,7 @@ aws-azs:
 # - These targets only upload to S3. They do NOT modify MWAA environment settings.
 # - Terraform controls which S3 object versions MWAA uses.
 # ==============================================================================
-MWAA_DAG_BUCKET       ?= gdf-dev-airflow
+MWAA_DAG_BUCKET       ?= gdf-prod-airflow
 MWAA_DAG_PREFIX       ?= airflow/dags
 MWAA_REQ_PREFIX       ?= airflow/requirements
 MWAA_PLUGINS_PREFIX   ?= airflow/plugins
@@ -422,8 +449,8 @@ tunnel-redshift:
 # - Source of truth: SSM Parameter Store (/gdf/<env>/...)
 # - Works for dev/prod by changing ENVIRONMENT=prod
 # ==============================================================================
-
-ENVIRONMENT ?= dev
+# change here to either dev or prod depending your environment
+ENVIRONMENT ?= prod
 
 .PHONY: connect-mwaa connect-postgres connect-redshift connect-mwaa-mac
 

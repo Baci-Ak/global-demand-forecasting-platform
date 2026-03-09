@@ -91,6 +91,13 @@ KAGGLE_API_TOKEN="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['
 M5_COMPETITION="$(python3 -c "import json,sys; print(json.loads(sys.argv[1]).get('M5_COMPETITION','m5-forecasting-accuracy'))" "${KAGGLE_SECRET_JSON}")"
 
 
+MACRO_API_KEY="$(aws secretsmanager get-secret-value \
+  --region "${AWS_REGION}" \
+  --secret-id "${MACRO_SECRET_ID}" \
+  --query SecretString \
+  --output text)"
+
+
 # ------------------------------------------------------------------------------
 # Install application wheel (keep exact filename; no renaming)
 # ------------------------------------------------------------------------------
@@ -117,7 +124,7 @@ fi
 # Upgrade installer tooling inside the venv
 "${DBT_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
 
-# Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env)
+# Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env) ..
 "${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0"
 
 # Verify
@@ -126,7 +133,7 @@ fi
 
 
 # ------------------------------------------------------------------------------
-# Write runtime env file for tasks (tasks should source this)
+# Write runtime env file for tasks (tasks should source this)..
 # ------------------------------------------------------------------------------
 cat > "${RUNTIME_ENV_PATH}" <<EOF
 # Generated at MWAA startup. Source this file in tasks to load runtime settings.
@@ -146,6 +153,17 @@ export STAGING_SCHEMA='${STAGING_SCHEMA}'
 export DBT_TARGET='${DBT_TARGET}'
 export DBT_THREADS='${DBT_THREADS}'
 export DBT_BIN='${DBT_BIN}'
+export WEATHER_SOURCE_NAME='${WEATHER_SOURCE_NAME}'
+export WEATHER_PROVIDER='${WEATHER_PROVIDER}'
+export WEATHER_BASE_URL='${WEATHER_BASE_URL}'
+export WEATHER_DEFAULT_HISTORICAL_DAYS='${WEATHER_DEFAULT_HISTORICAL_DAYS}'
+export MACRO_SOURCE_NAME='${MACRO_SOURCE_NAME}'
+export MACRO_PROVIDER='${MACRO_PROVIDER}'
+export MACRO_BASE_URL='${MACRO_BASE_URL}'
+export MACRO_API_KEY='${MACRO_API_KEY}'
+export TRENDS_SOURCE_NAME='${TRENDS_SOURCE_NAME}'
+export TRENDS_PROVIDER='${TRENDS_PROVIDER}'
+export TRENDS_GEO='${TRENDS_GEO}'
 EOF
 
 # export DBT_BIN='${DBT_BIN}'

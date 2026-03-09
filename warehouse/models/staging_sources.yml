@@ -50,4 +50,124 @@ sources:
           - name: sales
             description: "Daily unit sales."
 
+      # whether API
+      - name: weather_daily_raw
+        description: "Raw daily weather observations flattened from Bronze JSON and loaded into Redshift staging."
+        columns:
+          - name: ingest_date
+            description: "Ingestion date for the weather payload."
+
+          - name: source_name
+            description: "Logical ingestion source name."
+
+          - name: provider
+            description: "Weather data provider."
+
+          - name: schema_version
+            description: "Schema version of the raw payload contract."
+
+          - name: location_id
+            description: "Weather location identifier aligned to M5 geography."
+
+          - name: state_id
+            description: "M5 state identifier used for downstream joins."
+
+          - name: location_label
+            description: "Human-readable location label."
+
+          - name: location_timezone
+            description: "Timezone of the weather location."
+
+          - name: latitude
+            description: "Latitude of the weather location."
+
+          - name: longitude
+            description: "Longitude of the weather location."
+
+          - name: weather_date
+            description: "Observation date for the weather record."
+
+          - name: temperature_2m_max
+            description: "Daily maximum temperature at 2 meters."
+
+          - name: temperature_2m_min
+            description: "Daily minimum temperature at 2 meters."
+
+          - name: precipitation_sum
+            description: "Daily total precipitation."
+
+          - name: wind_speed_10m_max
+            description: "Daily maximum wind speed at 10 meters."
+
+
+      - name: macro_series_raw
+        description: "Raw macroeconomic time series observations loaded by Python into Redshift staging."
+        columns:
+          - name: ingest_date
+            description: "Date the macro payload was ingested."
+
+          - name: source_name
+            description: "Logical source name for the macro provider."
+
+          - name: provider
+            description: "Upstream provider name (e.g. fred)."
+
+          - name: schema_version
+            description: "Schema contract version used during ingestion."
+
+          - name: series_id
+            description: "Provider series identifier."
+
+          - name: feature_name
+            description: "Internal stable feature name used by the platform."
+
+          - name: series_label
+            description: "Human-readable description of the macro series."
+
+          - name: frequency
+            description: "Observation frequency (monthly)."
+
+          - name: units
+            description: "Units of the macro series."
+
+          - name: observation_date
+            description: "Date of the macro observation."
+
+          - name: observation_value
+            description: "Observed macroeconomic value."
+
+
+      - name: trends_interest_over_time_raw
+        description: "Raw Google Trends interest-over-time observations loaded by Python into Redshift staging."
+        columns:
+          - name: ingest_date
+            description: "Date the Trends payload was ingested."
+
+          - name: source_name
+            description: "Logical source name for the Trends provider."
+
+          - name: provider
+            description: "Upstream provider name."
+
+          - name: schema_version
+            description: "Schema contract version used during ingestion."
+
+          - name: keyword
+            description: "Keyword used for the Trends query."
+
+          - name: feature_name
+            description: "Stable internal feature name used by the platform."
+
+          - name: label
+            description: "Human-readable description of the Trends feature."
+
+          - name: geo
+            description: "Geographic code used for the Trends query."
+
+          - name: trend_date
+            description: "Date of the Trends observation."
+
+          - name: interest_value
+            description: "Observed search-interest value."
+
 

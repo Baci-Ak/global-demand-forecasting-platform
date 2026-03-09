@@ -11,7 +11,7 @@
 # - Does NOT grant access to Secrets Manager (credentials are handled separately).
 # - Scope is restricted to:
 #   - Parameter path: /gdf/dev/*
-#   - Specific jumphost instance id from remote state
+#   - Specific jumphost instance id from remote state, when it exists
 # ==============================================================================
 
 data "terraform_remote_state" "ssm_jumphost" {
@@ -27,7 +27,17 @@ data "terraform_remote_state" "ssm_jumphost" {
 }
 
 locals {
-  dev_jumphost_instance_id = data.terraform_remote_state.ssm_jumphost.outputs.jumphost_instance_id
+  dev_jumphost_instance_id = try(
+    data.terraform_remote_state.ssm_jumphost.outputs.jumphost_instance_id,
+    null
+  )
+
+  tunnel_session_resources = local.dev_jumphost_instance_id == null ? [
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/AWS-StartPortForwardingSessionToRemoteHost"
+  ] : [
+    "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${local.dev_jumphost_instance_id}",
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/AWS-StartPortForwardingSessionToRemoteHost"
+  ]
 }
 
 resource "aws_iam_policy" "engineer_tunnels" {
@@ -49,7 +59,7 @@ resource "aws_iam_policy" "engineer_tunnels" {
         Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/gdf/dev/*"
       },
 
-      # --- Start SSM port-forward sessions ONLY to the jumphost ---
+      # --- Start SSM port-forward sessions ONLY to the jumphost when it exists ---
       {
         Sid    = "StartSessionToJumphostOnly"
         Effect = "Allow"
@@ -58,10 +68,7 @@ resource "aws_iam_policy" "engineer_tunnels" {
           "ssm:TerminateSession",
           "ssm:ResumeSession"
         ]
-        Resource = [
-          "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${local.dev_jumphost_instance_id}",
-          "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/AWS-StartPortForwardingSessionToRemoteHost"
-        ]
+        Resource = local.tunnel_session_resources
       },
 
       # --- Required by session-manager-plugin / CLI usability ---

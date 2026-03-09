@@ -85,7 +85,7 @@ with DAG(
     # --------------------------------------------------------------------------
     ingest_m5 = BashOperator(
         task_id="ingest_m5_to_bronze",
-        bash_command="set -euo pipefail; make ingest-m5",
+        bash_command="set -euo pipefail; make ingest-m5 ingest-weather ingest-macro ingest-trends",
         cwd="/opt/project",
         execution_timeout=timedelta(hours=2),
     )

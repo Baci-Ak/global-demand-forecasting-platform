@@ -175,7 +175,10 @@ with DAG(
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
-            "python3 -c \"from ingestion.m5_ingestion import ingest_m5_to_bronze; ingest_m5_to_bronze()\""
+            "python3 -c \"from ingestion.m5_ingestion import ingest_m5_to_bronze; ingest_m5_to_bronze()\"; "
+            "python3 -c \"from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()\"; "
+            "python3 -c \"from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()\"; "
+            "python3 -c \"from ingestion.trends.trends_ingestion import ingest_trends_to_bronze; ingest_trends_to_bronze()\""
         ),
         execution_timeout=timedelta(hours=2),
     )
@@ -190,7 +193,10 @@ with DAG(
             f"{MWAA_CD_ROOT}; "
             "python3 -m quality.run_calendar_dq; "
             "python3 -m quality.run_sell_prices_dq; "
-            "python3 -m quality.run_sales_train_validation_dq"
+            "python3 -m quality.run_sales_train_validation_dq;"
+            "python3 -m quality.run_weather_daily_dq; "
+            "python3 -m quality.run_macro_series_dq; "
+            "python3 -m quality.run_trends_interest_over_time_dq"
         ),
         execution_timeout=timedelta(hours=1),
     )
@@ -211,7 +217,10 @@ with DAG(
             # Run the loaders
             "python3 -m warehouse.loaders.load_m5_calendar_to_staging; "
             "python3 -m warehouse.loaders.load_m5_sell_prices_to_staging; "
-            "python3 -m warehouse.loaders.load_m5_sales_train_validation_to_staging"
+            "python3 -m warehouse.loaders.load_m5_sales_train_validation_to_staging;"
+            "python3 -m warehouse.loaders.load_weather_daily_to_staging; "
+            "python3 -m warehouse.loaders.load_macro_series_to_staging; "
+            "python3 -m warehouse.loaders.load_trends_interest_over_time_to_staging"
         ),
         execution_timeout=timedelta(hours=2),
         pool="warehouse_pool",

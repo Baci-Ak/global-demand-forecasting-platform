@@ -55,7 +55,31 @@ class Settings(BaseSettings):
     # -------------------------
     # Ingestion sources
     # -------------------------
+    # m5 kaggle
     M5_SOURCE_NAME: str | None = None
+
+    #whether external source (API)
+    WEATHER_SOURCE_NAME: str | None = None
+    WEATHER_PROVIDER: str | None = None
+    WEATHER_BASE_URL: str | None = None
+    WEATHER_API_KEY: str | None = None
+    WEATHER_DEFAULT_HISTORICAL_DAYS: int | None = None
+
+
+
+    # -------------------------
+    # Macro (FRED)
+    # -------------------------
+    MACRO_SOURCE_NAME: str | None = None
+    MACRO_PROVIDER: str | None = None
+    MACRO_BASE_URL: str | None = None
+    MACRO_API_KEY: str | None = None
+
+
+
+    TRENDS_SOURCE_NAME: str | None = None
+    TRENDS_PROVIDER: str | None = None
+    TRENDS_GEO: str | None = None
 
 
     # -------------------------

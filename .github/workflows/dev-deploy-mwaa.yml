@@ -1,0 +1,123 @@
+# ==============================================================================
+# Dev - Deploy to MWAA (manual)
+# ==============================================================================
+#
+# Purpose
+# - Deploy MWAA artifacts to dev on demand.
+# - Keep dev MWAA deploys explicit and repeatable.
+#
+# Safety
+# - Uses GitHub Environment: dev
+# - Uses GitHub OIDC to assume AWS role (no static AWS keys).
+#
+# Usage
+# - GitHub → Actions → this workflow → Run workflow
+# - deploy_scope:
+#   - dags-only : sync DAGs to S3 only (no Terraform apply)
+#   - full      : deploy runtime artifacts + wheel, then Terraform apply dev MWAA
+#
+# Important
+# - DAG-only changes do NOT require Terraform apply.
+# - Runtime changes (startup.sh, requirements, plugins, wheel bootstrap behavior)
+#   MUST go through Terraform apply for the dev MWAA stack so the environment
+#   actually picks up the latest registered artifacts.
+# ==============================================================================
+
+name: Dev - Deploy to MWAA (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "What to deploy"
+        required: true
+        default: "dags-only"
+        type: choice
+        options:
+          - dags-only
+          - full
+
+concurrency:
+  group: dev-mwaa-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
+
+    steps:
+      # ------------------------------------------------------------------------
+      # Source
+      # ------------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------------
+      # Auth (OIDC)
+      # ------------------------------------------------------------------------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ------------------------------------------------------------------------
+      # System dependencies
+      # ------------------------------------------------------------------------
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      # ------------------------------------------------------------------------
+      # Python build tooling
+      # - Needed for wheel build in full deploys
+      # ------------------------------------------------------------------------
+      - name: Set up Python
+        if: ${{ inputs.deploy_scope == 'full' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ------------------------------------------------------------------------
+      # Terraform tooling
+      # - Needed only for full deploys
+      # ------------------------------------------------------------------------
+      - name: Set up Terraform
+        if: ${{ inputs.deploy_scope == 'full' }}
+        uses: hashicorp/setup-terraform@v3
+
+      # ------------------------------------------------------------------------
+      # Deploy: DAGs only
+      # ------------------------------------------------------------------------
+      - name: Deploy DAGs only (dev)
+        if: ${{ inputs.deploy_scope == 'dags-only' }}
+        run: |
+          make mwaa-upload-dags
+
+      # ------------------------------------------------------------------------
+      # Deploy: Full runtime artifacts
+      # - Upload DAGs, requirements, plugins, startup, and wheel
+      # ------------------------------------------------------------------------
+      - name: Deploy full runtime artifacts (dev)
+        if: ${{ inputs.deploy_scope == 'full' }}
+        run: |
+          make mwaa-ci-deploy
+
+      # ------------------------------------------------------------------------
+      # Apply Terraform for dev MWAA
+      # ------------------------------------------------------------------------
+      - name: Terraform apply dev MWAA stack
+        if: ${{ inputs.deploy_scope == 'full' }}
+        working-directory: infra/terraform/envs/dev
+        run: |
+          make apply-mwaa

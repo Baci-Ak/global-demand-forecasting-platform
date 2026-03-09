@@ -41,3 +41,157 @@ models:
 
       - name: sell_price
         description: "Weekly sell price aligned to the sales date's wm_yr_wk (may be null for some rows)."
+
+
+  - name: gold_m5_training_daily_with_weather
+    description: >
+      Gold daily training dataset at grain (store_id, item_id, date), built from
+      Silver sales enriched with daily weather by state and date.
+    columns:
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: temperature_2m_max
+        description: "Daily maximum temperature at 2 meters."
+
+      - name: temperature_2m_min
+        description: "Daily minimum temperature at 2 meters."
+
+      - name: precipitation_sum
+        description: "Daily total precipitation."
+
+      - name: wind_speed_10m_max
+        description: "Daily maximum wind speed at 10 meters."
+
+
+
+  - name: gold_m5_training_daily_with_macro
+    description: >
+      Gold daily training dataset at grain (store_id, item_id, date), built from
+      Silver sales enriched with aligned macroeconomic features.
+    columns:
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales."
+        data_tests:
+          - not_null
+
+      - name: cpi_all_items
+        description: "Aligned CPI all-items macro feature."
+
+      - name: unemployment_rate
+        description: "Aligned unemployment rate macro feature."
+
+      - name: federal_funds_rate
+        description: "Aligned federal funds rate macro feature."
+
+      - name: nonfarm_payrolls
+        description: "Aligned nonfarm payrolls macro feature."
+
+  
+
+
+
+  - name: gold_m5_daily_feature_mart
+    description: >
+      Final business-ready and ML-ready daily dataset at grain (store_id, item_id, date), built
+      from the unified Silver feature table enriched with price, weather, macro,
+      and Google Trends signals.
+    columns:
+      - name: id
+        description: "Series identifier (unique per item/store)."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        description: "Item identifier."
+        data_tests:
+          - not_null
+
+      - name: store_id
+        description: "Store identifier."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date."
+        data_tests:
+          - not_null
+
+      - name: sales
+        description: "Daily unit sales target."
+        data_tests:
+          - not_null
+
+      - name: temperature_2m_max
+        description: "Daily maximum temperature at 2 meters."
+
+      - name: temperature_2m_min
+        description: "Daily minimum temperature at 2 meters."
+
+      - name: precipitation_sum
+        description: "Daily total precipitation."
+
+      - name: wind_speed_10m_max
+        description: "Daily maximum wind speed at 10 meters."
+
+      - name: cpi_all_items
+        description: "Aligned CPI all-items macro feature."
+
+      - name: unemployment_rate
+        description: "Aligned unemployment rate macro feature."
+
+      - name: federal_funds_rate
+        description: "Aligned federal funds rate macro feature."
+
+      - name: nonfarm_payrolls
+        description: "Aligned nonfarm payrolls macro feature."
+
+      - name: trends_walmart
+        description: "Aligned Google Trends feature for Walmart."
+
+      - name: trends_grocery_store
+        description: "Aligned Google Trends feature for grocery store."
+
+      - name: trends_discount_store
+        description: "Aligned Google Trends feature for discount store."
+
+      - name: trends_cleaning_supplies
+        description: "Aligned Google Trends feature for cleaning supplies."
+
+      - name: wm_yr_wk
+        description: "Walmart year-week code aligned to the sales date."
+
+      - name: sell_price
+        description: "Weekly sell price aligned to the sales date and item/store."

@@ -13,15 +13,18 @@
 # Usage
 # - GitHub → Actions → this workflow → Run workflow
 # - deploy_scope:
-#   - dags-only : sync DAGs to S3 (no MWAA update)
-#   - full      : deploy runtime artifacts + wheel, then trigger MWAA update
+#   - dags-only : sync DAGs to S3 only (no Terraform apply)
+#   - full      : deploy runtime artifacts + wheel, then Terraform apply prod MWAA
+#
+# Important
+# - DAG-only changes do NOT require Terraform apply.
+# - Runtime changes (startup.sh, requirements, plugins, wheel bootstrap behavior)
+#   MUST go through Terraform apply for the prod MWAA stack so the environment
+#   actually picks up the latest registered artifacts.
 # ==============================================================================
 
 name: Prod - Deploy to MWAA (manual)
 
-# ------------------------------------------------------------------------------
-# Trigger (manual only)
-# ------------------------------------------------------------------------------
 on:
   workflow_dispatch:
     inputs:
@@ -34,17 +37,22 @@ on:
           - dags-only
           - full
 
+concurrency:
+  group: prod-mwaa-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: prod
 
-    # --------------------------------------------------------------------------
-    # Required for OIDC -> AWS STS
-    # --------------------------------------------------------------------------
     permissions:
       id-token: write
       contents: read
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
 
     steps:
       # ------------------------------------------------------------------------
@@ -65,38 +73,54 @@ jobs:
       # ------------------------------------------------------------------------
       # System dependencies
       # ------------------------------------------------------------------------
-      - name: Install system deps (zip)
+      - name: Install system deps
         run: |
           sudo apt-get update
           sudo apt-get install -y zip
 
       # ------------------------------------------------------------------------
-      # Deploy: DAGs only (no MWAA update needed)
+      # Python build tooling
+      # - Needed for wheel build in full deploys
+      # ------------------------------------------------------------------------
+      - name: Set up Python
+        if: ${{ inputs.deploy_scope == 'full' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ------------------------------------------------------------------------
+      # Terraform tooling
+      # - Needed only for full deploys
+      # ------------------------------------------------------------------------
+      - name: Set up Terraform
+        if: ${{ inputs.deploy_scope == 'full' }}
+        uses: hashicorp/setup-terraform@v3
+
+      # ------------------------------------------------------------------------
+      # Deploy: DAGs only
       # ------------------------------------------------------------------------
       - name: Deploy DAGs only (prod)
         if: ${{ inputs.deploy_scope == 'dags-only' }}
-        env:
-          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
         run: |
           make mwaa-upload-dags
 
       # ------------------------------------------------------------------------
-      # Deploy: Full runtime (wheel + requirements + plugins + startup)
+      # Deploy: Full runtime artifacts
+      # - Upload DAGs, requirements, plugins, startup, and wheel
       # ------------------------------------------------------------------------
-      - name: Deploy full runtime (prod)
+      - name: Deploy full runtime artifacts (prod)
         if: ${{ inputs.deploy_scope == 'full' }}
-        env:
-          MWAA_DAG_BUCKET: ${{ vars.MWAA_BUCKET }}
         run: |
           make mwaa-ci-deploy
 
       # ------------------------------------------------------------------------
-      # MWAA refresh
-      # - Needed for requirements/plugins/startup changes to take effect.
+      # Apply Terraform for prod MWAA
+      # - This is the critical step that makes MWAA actually pick up runtime
+      #   changes such as startup.sh / requirements / plugins and forces the
+      #   environment update through the Terraform source of truth.
       # ------------------------------------------------------------------------
-      - name: Trigger MWAA environment update (prod)
+      - name: Terraform apply prod MWAA stack
         if: ${{ inputs.deploy_scope == 'full' }}
+        working-directory: infra/terraform/envs/prod
         run: |
-          aws mwaa update-environment \
-            --name "${{ vars.MWAA_ENV_NAME }}" \
-            --region "${{ vars.AWS_REGION }}"
+          make apply-mwaa
