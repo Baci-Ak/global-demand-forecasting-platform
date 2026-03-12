@@ -11,16 +11,17 @@
 -- Design
 -- ------
 -- - Start from the actual sales date set, not the full calendar table.
--- - For each sales date and macro feature, carry forward the most recent
---   available macro observation on or before that date.
+-- - First build the stable feature domain from macro series metadata.
+-- - For each (date, feature_name), carry forward the most recent available
+--   macro observation on or before that date.
 -- - Output grain:
 --     (date, feature_name)
 --
--- Notes
--- -----
--- - This keeps the aligned macro table scoped to the real training horizon.
--- - Later, if needed, we can replace this with release-aware or vintage-aware
---   logic without changing downstream model interfaces.
+-- Important behavior
+-- ------------------
+-- - This model never emits rows with null feature_name.
+-- - Dates earlier than the first available observation for a feature simply
+--   do not produce an aligned row for that feature.
 -- ------------------------------------------------------------------------------
 
 with sales_dates as (
@@ -28,6 +29,15 @@ with sales_dates as (
     select distinct
         date
     from {{ ref('silver_m5_sales') }}
+
+),
+
+macro_features as (
+
+    select distinct
+        feature_name
+    from {{ ref('silver_macro_series') }}
+    where feature_name is not null
 
 ),
 
@@ -39,6 +49,17 @@ macro as (
         observation_value
     from {{ ref('silver_macro_series') }}
     where observation_value is not null
+      and feature_name is not null
+
+),
+
+date_feature_spine as (
+
+    select
+        s.date,
+        f.feature_name
+    from sales_dates s
+    cross join macro_features f
 
 ),
 
@@ -46,16 +67,17 @@ joined as (
 
     select
         s.date,
-        m.feature_name,
+        s.feature_name,
         m.observation_date,
         m.observation_value,
         row_number() over (
-            partition by s.date, m.feature_name
+            partition by s.date, s.feature_name
             order by m.observation_date desc
         ) as rn
-    from sales_dates s
+    from date_feature_spine s
     left join macro m
-      on m.observation_date <= s.date
+      on m.feature_name = s.feature_name
+     and m.observation_date <= s.date
 
 )
 
@@ -66,3 +88,4 @@ select
     observation_value
 from joined
 where rn = 1
+  and observation_date is not null

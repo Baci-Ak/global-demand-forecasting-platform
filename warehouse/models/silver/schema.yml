@@ -290,57 +290,6 @@ models:
         description: "Macro value aligned to the daily calendar date."
 
 
-  - name: silver_m5_sales_with_macro
-    description: "Daily M5 sales enriched with aligned macroeconomic features by date."
-    columns:
-      - name: id
-        description: "Series identifier (unique per item/store)."
-        data_tests:
-          - not_null
-
-      - name: item_id
-        description: "Item identifier."
-        data_tests:
-          - not_null
-
-      - name: store_id
-        description: "Store identifier."
-        data_tests:
-          - not_null
-
-      - name: state_id
-        description: "State identifier."
-        data_tests:
-          - not_null
-
-      - name: d
-        description: "M5 day identifier."
-        data_tests:
-          - not_null
-
-      - name: date
-        description: "Calendar date."
-        data_tests:
-          - not_null
-
-      - name: sales
-        description: "Daily unit sales."
-        data_tests:
-          - not_null
-
-      - name: cpi_all_items
-        description: "Aligned CPI all-items macro feature."
-
-      - name: unemployment_rate
-        description: "Aligned unemployment rate macro feature."
-
-      - name: federal_funds_rate
-        description: "Aligned federal funds rate macro feature."
-
-      - name: nonfarm_payrolls
-        description: "Aligned nonfarm payrolls macro feature."
-
-
   
   - name: silver_trends_interest_over_time
     description: "Silver Google Trends interest-over-time observations cleaned and typed from staging.trends_interest_over_time_raw."
@@ -377,57 +326,6 @@ models:
 
       - name: interest_value
         description: "Search-interest value aligned to the daily sales date."
-
-
-  - name: silver_m5_sales_with_trends
-    description: "Daily M5 sales enriched with aligned Google Trends features by date."
-    columns:
-      - name: id
-        description: "Series identifier (unique per item/store)."
-        data_tests:
-          - not_null
-
-      - name: item_id
-        description: "Item identifier."
-        data_tests:
-          - not_null
-
-      - name: store_id
-        description: "Store identifier."
-        data_tests:
-          - not_null
-
-      - name: state_id
-        description: "State identifier."
-        data_tests:
-          - not_null
-
-      - name: d
-        description: "M5 day identifier."
-        data_tests:
-          - not_null
-
-      - name: date
-        description: "Calendar date."
-        data_tests:
-          - not_null
-
-      - name: sales
-        description: "Daily unit sales."
-        data_tests:
-          - not_null
-
-      - name: trends_walmart
-        description: "Aligned Google Trends feature for Walmart."
-
-      - name: trends_grocery_store
-        description: "Aligned Google Trends feature for grocery store."
-
-      - name: trends_discount_store
-        description: "Aligned Google Trends feature for discount store."
-
-      - name: trends_cleaning_supplies
-        description: "Aligned Google Trends feature for cleaning supplies."
 
 
 

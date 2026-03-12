@@ -60,7 +60,8 @@ with base as (
 pricing as (
 
     select
-        id,
+        store_id,
+        item_id,
         date,
         wm_yr_wk,
         sell_price
@@ -101,5 +102,6 @@ select
 
 from base b
 left join pricing p
-  on b.id = p.id
+  on b.store_id = p.store_id
+ and b.item_id = p.item_id
  and b.date = p.date

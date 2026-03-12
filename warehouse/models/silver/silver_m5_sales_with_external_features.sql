@@ -17,18 +17,30 @@
 -- Design
 -- ------
 -- - Preserve the original M5 sales grain.
--- - Join external features strictly on the sales date.
--- - Each feature family is pre-aligned to the sales date set upstream.
+-- - Join weather by (state_id, date).
+-- - Join macro and trends by date after upstream daily alignment.
+-- - Avoid depending on redundant intermediate "sales_with_*" models.
 --
--- Downstream usage
--- ----------------
--- This table becomes the canonical feature source for forecasting models
--- and feeds the Gold training dataset.
+-- Output grain
+-- ------------
+-- One row per:
+--   (id, d)
+-- which maps to daily sales grain:
+--   (store_id, item_id, date)
 -- ------------------------------------------------------------------------------
 
 with sales as (
 
-    select *
+    select
+        id,
+        item_id,
+        dept_id,
+        cat_id,
+        store_id,
+        state_id,
+        d,
+        date,
+        sales
     from {{ ref('silver_m5_sales') }}
 
 ),
@@ -36,44 +48,52 @@ with sales as (
 weather as (
 
     select
-        id,
-        date,
+        state_id,
+        weather_date,
         temperature_2m_max,
         temperature_2m_min,
         precipitation_sum,
         wind_speed_10m_max
-    from {{ ref('silver_m5_sales_with_weather') }}
+    from {{ ref('silver_weather_daily') }}
 
 ),
 
 macro as (
 
     select
-        id,
         date,
-        cpi_all_items,
-        unemployment_rate,
-        federal_funds_rate,
-        nonfarm_payrolls
-    from {{ ref('silver_m5_sales_with_macro') }}
+        max(case when feature_name = 'cpi_all_items' then observation_value end) as cpi_all_items,
+        max(case when feature_name = 'unemployment_rate' then observation_value end) as unemployment_rate,
+        max(case when feature_name = 'federal_funds_rate' then observation_value end) as federal_funds_rate,
+        max(case when feature_name = 'nonfarm_payrolls' then observation_value end) as nonfarm_payrolls
+    from {{ ref('silver_macro_daily_aligned') }}
+    group by date
 
 ),
 
 trends as (
 
     select
-        id,
         date,
-        trends_walmart,
-        trends_grocery_store,
-        trends_discount_store,
-        trends_cleaning_supplies
-    from {{ ref('silver_m5_sales_with_trends') }}
+        max(case when feature_name = 'trends_walmart' then interest_value end) as trends_walmart,
+        max(case when feature_name = 'trends_grocery_store' then interest_value end) as trends_grocery_store,
+        max(case when feature_name = 'trends_discount_store' then interest_value end) as trends_discount_store,
+        max(case when feature_name = 'trends_cleaning_supplies' then interest_value end) as trends_cleaning_supplies
+    from {{ ref('silver_trends_daily_aligned') }}
+    group by date
 
 )
 
 select
-    s.*,
+    s.id,
+    s.item_id,
+    s.dept_id,
+    s.cat_id,
+    s.store_id,
+    s.state_id,
+    s.d,
+    s.date,
+    s.sales,
 
     -- Weather features
     w.temperature_2m_max,
@@ -95,13 +115,9 @@ select
 
 from sales s
 left join weather w
-  on s.id = w.id
- and s.date = w.date
-
+  on s.state_id = w.state_id
+ and s.date = w.weather_date
 left join macro m
-  on s.id = m.id
- and s.date = m.date
-
+  on s.date = m.date
 left join trends t
-  on s.id = t.id
- and s.date = t.date
+  on s.date = t.date

@@ -82,46 +82,6 @@ models:
 
 
 
-  - name: gold_m5_training_daily_with_macro
-    description: >
-      Gold daily training dataset at grain (store_id, item_id, date), built from
-      Silver sales enriched with aligned macroeconomic features.
-    columns:
-      - name: store_id
-        description: "Store identifier."
-        data_tests:
-          - not_null
-
-      - name: item_id
-        description: "Item identifier."
-        data_tests:
-          - not_null
-
-      - name: date
-        description: "Calendar date."
-        data_tests:
-          - not_null
-
-      - name: sales
-        description: "Daily unit sales."
-        data_tests:
-          - not_null
-
-      - name: cpi_all_items
-        description: "Aligned CPI all-items macro feature."
-
-      - name: unemployment_rate
-        description: "Aligned unemployment rate macro feature."
-
-      - name: federal_funds_rate
-        description: "Aligned federal funds rate macro feature."
-
-      - name: nonfarm_payrolls
-        description: "Aligned nonfarm payrolls macro feature."
-
-  
-
-
 
   - name: gold_m5_daily_feature_mart
     description: >
