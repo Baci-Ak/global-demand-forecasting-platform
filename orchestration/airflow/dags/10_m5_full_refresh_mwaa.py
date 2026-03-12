@@ -175,10 +175,7 @@ with DAG(
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
-            "python3 -c \"from ingestion.m5_ingestion import ingest_m5_to_bronze; ingest_m5_to_bronze()\"; "
-            "python3 -c \"from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()\"; "
-            "python3 -c \"from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()\"; "
-            "python3 -c \"from ingestion.trends.trends_ingestion import ingest_trends_to_bronze; ingest_trends_to_bronze()\""
+            "python3 -c \"from ingestion.m5_ingestion import ingest_m5_to_bronze; ingest_m5_to_bronze()\""
         ),
         execution_timeout=timedelta(hours=2),
     )
@@ -186,17 +183,14 @@ with DAG(
     # --------------------------------------------------------------------------
     # Step 2: Data Quality gates
     # --------------------------------------------------------------------------
-    dq_all = BashOperator(
-        task_id="dq_all",
+    dq_m5_core = BashOperator(
+        task_id="dq_m5_core",
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
             "python3 -m quality.run_calendar_dq; "
             "python3 -m quality.run_sell_prices_dq; "
-            "python3 -m quality.run_sales_train_validation_dq;"
-            "python3 -m quality.run_weather_daily_dq; "
-            "python3 -m quality.run_macro_series_dq; "
-            "python3 -m quality.run_trends_interest_over_time_dq"
+            "python3 -m quality.run_sales_train_validation_dq"
         ),
         execution_timeout=timedelta(hours=1),
     )
@@ -204,8 +198,8 @@ with DAG(
     # --------------------------------------------------------------------------
     # Step 3: Stage raw data into the warehouse
     # --------------------------------------------------------------------------
-    stage_all = BashOperator(
-        task_id="warehouse_stage_all",
+    stage_m5_core = BashOperator(
+        task_id="warehouse_stage_m5_core",
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
@@ -217,7 +211,58 @@ with DAG(
             # Run the loaders
             "python3 -m warehouse.loaders.load_m5_calendar_to_staging; "
             "python3 -m warehouse.loaders.load_m5_sell_prices_to_staging; "
-            "python3 -m warehouse.loaders.load_m5_sales_train_validation_to_staging;"
+            "python3 -m warehouse.loaders.load_m5_sales_train_validation_to_staging"
+        ),
+        execution_timeout=timedelta(hours=2),
+        pool="warehouse_pool",
+    )
+
+    # --------------------------------------------------------------------------
+    # Step 4: Ingest external sources to Bronze
+    # - These may now derive their date range from staged M5 data
+    # --------------------------------------------------------------------------
+    ingest_external = BashOperator(
+        task_id="ingest_external_sources_to_bronze",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            "python3 -c \"from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()\"; "
+            "python3 -c \"from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()\"; "
+            "python3 -c \"from ingestion.trends.trends_ingestion import ingest_trends_to_bronze; ingest_trends_to_bronze()\""
+        ),
+        execution_timeout=timedelta(hours=2),
+    )
+
+
+    # --------------------------------------------------------------------------
+    # Step 5: DQ for external sources only
+    # --------------------------------------------------------------------------
+    dq_external = BashOperator(
+        task_id="dq_external_sources",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            "python3 -m quality.run_weather_daily_dq; "
+            "python3 -m quality.run_macro_series_dq; "
+            "python3 -m quality.run_trends_interest_over_time_dq"
+        ),
+        execution_timeout=timedelta(hours=1),
+    )
+
+
+
+    # --------------------------------------------------------------------------
+    # Step 6: Stage external raw data only
+    # --------------------------------------------------------------------------
+    stage_external = BashOperator(
+        task_id="warehouse_stage_external_sources",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            f"{MWAA_ENSURE_DBT}"
+            f"{MWAA_RESOLVE_WAREHOUSE_DIR}"
+            f"{MWAA_DBT_DEPS}"
+            '"${DBT}" run --project-dir "${WAREHOUSE_DIR}" --profiles-dir "${WAREHOUSE_DIR}/.dbt" --select _staging_schema_init; '
             "python3 -m warehouse.loaders.load_weather_daily_to_staging; "
             "python3 -m warehouse.loaders.load_macro_series_to_staging; "
             "python3 -m warehouse.loaders.load_trends_interest_over_time_to_staging"
@@ -225,8 +270,9 @@ with DAG(
         execution_timeout=timedelta(hours=2),
         pool="warehouse_pool",
     )
+
     # --------------------------------------------------------------------------
-    # Step 4: dbt Silver build + test
+    # Step 7: dbt Silver build + test
     # --------------------------------------------------------------------------
 
     #make sure 'warehouse_pool' is created in the Airflow UI for warehouse_stage_all, dbt_silver, dbt_gold tasks, else, the task would never run.
@@ -248,7 +294,7 @@ with DAG(
     )
 
     # --------------------------------------------------------------------------
-    # Step 5: dbt Gold build + test
+    # Step 8: dbt Gold build + test
     # --------------------------------------------------------------------------
     dbt_gold = BashOperator(
         task_id="dbt_gold_build_and_test",
@@ -265,4 +311,4 @@ with DAG(
         pool="warehouse_pool",
     )
 
-    ingest_m5 >> dq_all >> stage_all >> dbt_silver >> dbt_gold
+    ingest_m5 >> dq_m5_core >> stage_m5_core >> ingest_external >> dq_external >> stage_external >> dbt_silver >> dbt_gold

@@ -31,15 +31,21 @@ from sqlalchemy import text
 
 def _get_m5_sales_date_range() -> tuple[date, date]:
     """
-    Read the historical M5 sales date range from the warehouse so weather
-    extraction aligns to the actual training window.
+    Read the M5 sales date range from staged M5 data, not Silver.
+
+    Why:
+    - External-source Bronze ingestion must be bootstrap-safe.
+    - Silver may not exist yet on a clean rebuild.
+    - M5 staging is guaranteed to exist before external ingestion runs.
     """
     sql = text(
         """
         select
-            min(date) as min_date,
-            max(date) as max_date
-        from silver.silver_m5_sales
+            min(c.date) as min_date,
+            max(c.date) as max_date
+        from staging.m5_sales_train_validation_long_raw s
+        join staging.m5_calendar_raw c
+          on s.d = c.d
         """
     )
 
@@ -50,7 +56,9 @@ def _get_m5_sales_date_range() -> tuple[date, date]:
     max_date = row["max_date"]
 
     if min_date is None or max_date is None:
-        raise RuntimeError("Could not determine M5 sales date range from silver.silver_m5_sales.")
+        raise RuntimeError(
+            "Could not determine M5 sales date range from staging M5 tables."
+        )
 
     return min_date, max_date
 
