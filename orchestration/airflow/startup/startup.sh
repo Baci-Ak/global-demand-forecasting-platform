@@ -180,6 +180,6 @@ echo "[startup] Skipping Alembic migrations (handled by deploy-time migration jo
 
 
 # ------------------------------------------------------------------------------
-# Sanity check imports.
+# Sanity check imports..
 # ------------------------------------------------------------------------------
 python3 -c "import ingestion, quality, warehouse, database, audit_log, app_config; print('[startup] gdf imports OK')"
