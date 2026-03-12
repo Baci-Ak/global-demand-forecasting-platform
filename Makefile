@@ -275,6 +275,19 @@ dq-all: dq-calendar dq-sell-prices dq-sales-train-validation dq-weather-daily dq
 	@echo "✅ All DQ gates passed"
 
 
+
+# ==============================================================================
+# Training
+# ==============================================================================
+train-random-forest:
+	AWS_ACCESS_KEY_ID=$(MINIO_ACCESS_KEY) \
+	AWS_SECRET_ACCESS_KEY=$(MINIO_SECRET_KEY) \
+	MLFLOW_S3_ENDPOINT_URL=$(MLFLOW_S3_ENDPOINT_URL) \
+	python -m training.train_random_forest
+
+
+
+
 # ==============================================================================
 # Warehouse (staging loaders + dbt)
 # ==============================================================================

@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # m5 kaggle
     M5_SOURCE_NAME: str | None = None
 
+
+    MAX_D_COLS: int = 90
+
     #whether external source (API)
     WEATHER_SOURCE_NAME: str | None = None
     WEATHER_PROVIDER: str | None = None

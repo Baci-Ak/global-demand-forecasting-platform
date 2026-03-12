@@ -60,7 +60,7 @@ PROCESSED_PREFIX = "processed/m5_sales_train_validation_long"
 # Dev-safety:
 # - Full history is ~30,490 * 1,913 ≈ 58M rows.
 # - Default to last 90 days unless overridden.
-MAX_D_COLS = int(os.getenv("MAX_D_COLS", "90"))  # set to 1913 for full load
+MAX_D_COLS = settings.MAX_D_COLS  # set to 1913 for full load
 
 
 def _recreate_long_table() -> None:
