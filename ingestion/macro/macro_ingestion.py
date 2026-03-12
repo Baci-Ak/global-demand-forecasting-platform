@@ -46,8 +46,8 @@ def _get_m5_sales_date_range() -> tuple[date, date]:
     sql = text(
         """
         select
-            min(c.date) as min_date,
-            max(c.date) as max_date
+            min(cast(c.date as date)) as min_date,
+            max(cast(c.date as date)) as max_date
         from staging.m5_sales_train_validation_long_raw s
         join staging.m5_calendar_raw c
           on s.d = c.d
