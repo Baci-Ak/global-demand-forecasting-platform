@@ -221,13 +221,31 @@ with DAG(
     # Step 4: Ingest external sources to Bronze
     # - These may now derive their date range from staged M5 data
     # --------------------------------------------------------------------------
-    ingest_external = BashOperator(
-        task_id="ingest_external_sources_to_bronze",
+    ingest_weather = BashOperator(
+        task_id="ingest_weather_to_bronze",
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
-            "python3 -c \"from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()\"; "
-            "python3 -c \"from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()\"; "
+            "python3 -c \"from ingestion.weather.weather_ingestion import ingest_weather_to_bronze; ingest_weather_to_bronze()\""
+        ),
+        execution_timeout=timedelta(hours=2),
+    )
+
+    ingest_macro = BashOperator(
+        task_id="ingest_macro_to_bronze",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            "python3 -c \"from ingestion.macro.macro_ingestion import ingest_macro_to_bronze; ingest_macro_to_bronze()\""
+        ),
+        execution_timeout=timedelta(hours=2),
+    )
+
+    ingest_trends = BashOperator(
+        task_id="ingest_trends_to_bronze",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
             "python3 -c \"from ingestion.trends.trends_ingestion import ingest_trends_to_bronze; ingest_trends_to_bronze()\""
         ),
         execution_timeout=timedelta(hours=2),
@@ -237,13 +255,32 @@ with DAG(
     # --------------------------------------------------------------------------
     # Step 5: DQ for external sources only
     # --------------------------------------------------------------------------
-    dq_external = BashOperator(
-        task_id="dq_external_sources",
+    dq_weather = BashOperator(
+        task_id="dq_weather",
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
-            "python3 -m quality.run_weather_daily_dq; "
-            "python3 -m quality.run_macro_series_dq; "
+            "python3 -m quality.run_weather_daily_dq"
+        ),
+        execution_timeout=timedelta(hours=1),
+    )
+
+    dq_macro = BashOperator(
+        task_id="dq_macro",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            "python3 -m quality.run_macro_series_dq"
+        ),
+        execution_timeout=timedelta(hours=1),
+    )
+
+
+    dq_trends= BashOperator(
+        task_id="dq_trends",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
             "python3 -m quality.run_trends_interest_over_time_dq"
         ),
         execution_timeout=timedelta(hours=1),
@@ -251,11 +288,12 @@ with DAG(
 
 
 
+
     # --------------------------------------------------------------------------
     # Step 6: Stage external raw data only
     # --------------------------------------------------------------------------
-    stage_external = BashOperator(
-        task_id="warehouse_stage_external_sources",
+    stage_weather= BashOperator(
+        task_id="warehouse_stage_weather",
         bash_command=(
             "set -euo pipefail; "
             f"{MWAA_CD_ROOT}; "
@@ -263,13 +301,48 @@ with DAG(
             f"{MWAA_RESOLVE_WAREHOUSE_DIR}"
             f"{MWAA_DBT_DEPS}"
             '"${DBT}" run --project-dir "${WAREHOUSE_DIR}" --profiles-dir "${WAREHOUSE_DIR}/.dbt" --select _staging_schema_init; '
-            "python3 -m warehouse.loaders.load_weather_daily_to_staging; "
-            "python3 -m warehouse.loaders.load_macro_series_to_staging; "
+            "python3 -m warehouse.loaders.load_weather_daily_to_staging"
+        ),
+        execution_timeout=timedelta(hours=2),
+        pool="warehouse_pool",
+    )
+
+
+
+    stage_macro = BashOperator(
+        task_id="warehouse_stage_macro",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            f"{MWAA_ENSURE_DBT}"
+            f"{MWAA_RESOLVE_WAREHOUSE_DIR}"
+            f"{MWAA_DBT_DEPS}"
+            '"${DBT}" run --project-dir "${WAREHOUSE_DIR}" --profiles-dir "${WAREHOUSE_DIR}/.dbt" --select _staging_schema_init; '
+            "python3 -m warehouse.loaders.load_macro_series_to_staging"
+        ),
+        execution_timeout=timedelta(hours=2),
+        pool="warehouse_pool",
+    )
+
+
+
+    stage_trends = BashOperator(
+        task_id="warehouse_stage_trends",
+        bash_command=(
+            "set -euo pipefail; "
+            f"{MWAA_CD_ROOT}; "
+            f"{MWAA_ENSURE_DBT}"
+            f"{MWAA_RESOLVE_WAREHOUSE_DIR}"
+            f"{MWAA_DBT_DEPS}"
+            '"${DBT}" run --project-dir "${WAREHOUSE_DIR}" --profiles-dir "${WAREHOUSE_DIR}/.dbt" --select _staging_schema_init; '
             "python3 -m warehouse.loaders.load_trends_interest_over_time_to_staging"
         ),
         execution_timeout=timedelta(hours=2),
         pool="warehouse_pool",
     )
+
+
+
 
     # --------------------------------------------------------------------------
     # Step 7: dbt Silver build + test
@@ -311,4 +384,10 @@ with DAG(
         pool="warehouse_pool",
     )
 
-    ingest_m5 >> dq_m5_core >> stage_m5_core >> ingest_external >> dq_external >> stage_external >> dbt_silver >> dbt_gold
+    ingest_m5 >> dq_m5_core >> stage_m5_core
+
+    stage_m5_core >> ingest_weather >> dq_weather >> stage_weather
+    stage_m5_core >> ingest_macro >> dq_macro >> stage_macro
+    stage_m5_core >> ingest_trends >> dq_trends >> stage_trends
+
+    [stage_weather, stage_macro, stage_trends] >> dbt_silver >> dbt_gold

@@ -15,9 +15,11 @@ Pattern
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from io import BytesIO, StringIO
+import time
 
+import pandas as pd
 from sqlalchemy import text
 
 from app_config.config import settings
@@ -28,6 +30,17 @@ from ingestion.trends.bronze_keys import build_trends_bronze_key
 from ingestion.trends.extract_google_trends import fetch_interest_over_time
 from ingestion.trends.keywords_registry import TRENDS_KEYWORDS
 from ingestion.trends.provider_contract import SCHEMA_VERSION, SOURCE_NAME
+
+
+# ------------------------------------------------------------------------------
+# Tunables
+# ------------------------------------------------------------------------------
+# Keep Google Trends requests modest to reduce provider throttling.
+TRENDS_CHUNK_DAYS = 180
+TRENDS_MAX_RETRIES_PER_CHUNK = 5
+TRENDS_BASE_SLEEP_SECONDS = 15
+TRENDS_SLEEP_BETWEEN_CHUNKS_SECONDS = 3
+TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS = 5
 
 
 # ------------------------------------------------------------------------------
@@ -67,6 +80,129 @@ def _get_m5_sales_date_range() -> tuple[date, date]:
     return min_date, max_date
 
 
+def _build_date_chunks(
+    *,
+    start_date: date,
+    end_date: date,
+    chunk_days: int = TRENDS_CHUNK_DAYS,
+) -> list[tuple[date, date]]:
+    """
+    Split a large date range into smaller inclusive chunks.
+
+    Example:
+    - start_date=2011-01-29
+    - end_date=2016-04-24
+    - chunk_days=180
+
+    Returns a list like:
+    [(2011-01-29, 2011-07-27), (2011-07-28, ...), ...]
+    """
+    if start_date > end_date:
+        raise ValueError("start_date cannot be after end_date")
+
+    chunks: list[tuple[date, date]] = []
+    chunk_start = start_date
+
+    while chunk_start <= end_date:
+        chunk_end = min(chunk_start + timedelta(days=chunk_days - 1), end_date)
+        chunks.append((chunk_start, chunk_end))
+        chunk_start = chunk_end + timedelta(days=1)
+
+    return chunks
+
+
+def _fetch_interest_over_time_chunked(
+    *,
+    keyword: str,
+    start_date: date,
+    end_date: date,
+    geo: str | None = None,
+) -> pd.DataFrame:
+    """
+    Fetch Google Trends over the full requested period by chunking the date range
+    into smaller windows and retrying each chunk with backoff.
+
+    This keeps full history while being much more resilient to HTTP 429 throttling.
+    """
+    chunks = _build_date_chunks(start_date=start_date, end_date=end_date)
+    frames: list[pd.DataFrame] = []
+
+    for idx, (chunk_start, chunk_end) in enumerate(chunks, start=1):
+        last_error: Exception | None = None
+
+        for attempt in range(1, TRENDS_MAX_RETRIES_PER_CHUNK + 1):
+            try:
+                df = fetch_interest_over_time(
+                    keyword=keyword,
+                    start_date=chunk_start,
+                    end_date=chunk_end,
+                    geo=geo,
+                )
+
+                if df.empty:
+                    raise RuntimeError(
+                        f"No Google Trends data returned for keyword={keyword} "
+                        f"chunk={chunk_start}..{chunk_end}"
+                    )
+
+                frames.append(df)
+
+                print(
+                    f"Fetched Trends chunk {idx}/{len(chunks)} for keyword={keyword} "
+                    f"covering {chunk_start} -> {chunk_end} "
+                    f"(rows={len(df)})"
+                )
+
+                break
+
+            except Exception as e:
+                last_error = e
+
+                if attempt == TRENDS_MAX_RETRIES_PER_CHUNK:
+                    raise RuntimeError(
+                        f"Failed to fetch Google Trends for keyword={keyword} "
+                        f"chunk={chunk_start}..{chunk_end} after "
+                        f"{TRENDS_MAX_RETRIES_PER_CHUNK} attempts"
+                    ) from e
+
+                sleep_seconds = TRENDS_BASE_SLEEP_SECONDS * attempt
+                print(
+                    f"Retrying Trends chunk for keyword={keyword} "
+                    f"covering {chunk_start} -> {chunk_end} "
+                    f"(attempt {attempt}/{TRENDS_MAX_RETRIES_PER_CHUNK}, "
+                    f"sleep={sleep_seconds}s) due to: {type(e).__name__}: {e}"
+                )
+                time.sleep(sleep_seconds)
+
+        # Small pause between successful chunks to reduce throttling pressure.
+        if idx < len(chunks):
+            time.sleep(TRENDS_SLEEP_BETWEEN_CHUNKS_SECONDS)
+
+    if not frames:
+        raise RuntimeError(
+            f"No Google Trends data fetched for keyword={keyword} "
+            f"covering {start_date} -> {end_date}"
+        )
+
+    combined = pd.concat(frames, ignore_index=True)
+
+    # pytrends returns a 'date' column after reset_index() in the extractor.
+    if "date" not in combined.columns:
+        raise RuntimeError(
+            f"Expected Trends payload to contain a 'date' column for keyword={keyword}. "
+            f"Found columns={list(combined.columns)}"
+        )
+
+    # Normalize + deduplicate across chunk boundaries just in case.
+    combined["date"] = pd.to_datetime(combined["date"]).dt.date
+    combined = combined.sort_values("date")
+
+    # Keep the last row if duplicates somehow exist.
+    combined = combined.drop_duplicates(subset=["date"], keep="last").reset_index(drop=True)
+
+    return combined
+
+
 # ------------------------------------------------------------------------------
 # Public ingestion entrypoint
 # ------------------------------------------------------------------------------
@@ -98,8 +234,8 @@ def ingest_trends_to_bronze() -> None:
         file_count = 0
         total_bytes = 0
 
-        for entry in TRENDS_KEYWORDS:
-            df = fetch_interest_over_time(
+        for idx, entry in enumerate(TRENDS_KEYWORDS, start=1):
+            df = _fetch_interest_over_time_chunked(
                 keyword=entry["keyword"],
                 start_date=start_date,
                 end_date=end_date,
@@ -136,6 +272,10 @@ def ingest_trends_to_bronze() -> None:
                 f"covering {start_date} -> {end_date} "
                 f"to s3://{bronze_bucket}/{s3_key}"
             )
+
+            # Small pause between keywords to reduce provider throttling.
+            if idx < len(TRENDS_KEYWORDS):
+                time.sleep(TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS)
 
         succeed_run(
             db=db,
