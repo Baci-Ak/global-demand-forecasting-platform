@@ -26,19 +26,22 @@ def make_trend_client() -> TrendReq:
     """
     Create one reusable pytrends client.
 
-    Notes
-    -----
-    - Reuse the same client across many chunk requests to reduce repeated token
-      setup and session churn.
-    - Keep initialization simple and compatible with pytrends runtime behavior.
-    - Do not pass timeout inside requests_args because pytrends already manages
-      timeout internally when requesting cookies/tokens.
+    Important
+    ---------
+    We intentionally disable pytrends built-in retry handling here.
+
+    Why:
+    - In the MWAA runtime, pytrends internal retry setup is not compatible with
+      the installed urllib3 version and crashes with:
+        TypeError: Retry.__init__() got an unexpected keyword argument 'method_whitelist'
+    - We already implement retry/backoff/session-reset logic ourselves in
+      ingestion.trends.trends_ingestion, which is the correct place for this.
     """
     return TrendReq(
         hl="en-US",
         tz=0,
-        retries=3,
-        backoff_factor=0.5,
+        retries=0,
+        backoff_factor=0,
         proxies=getattr(settings, "TRENDS_PROXIES", None) or [],
     )
 
