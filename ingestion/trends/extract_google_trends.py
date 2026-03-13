@@ -30,7 +30,9 @@ def make_trend_client() -> TrendReq:
     -----
     - Reuse the same client across many chunk requests to reduce repeated token
       setup and session churn.
-    - pytrends supports retries/backoff_factor/proxies in TrendReq.
+    - Keep initialization simple and compatible with pytrends runtime behavior.
+    - Do not pass timeout inside requests_args because pytrends already manages
+      timeout internally when requesting cookies/tokens.
     """
     return TrendReq(
         hl="en-US",
@@ -38,7 +40,6 @@ def make_trend_client() -> TrendReq:
         retries=3,
         backoff_factor=0.5,
         proxies=getattr(settings, "TRENDS_PROXIES", None) or [],
-        requests_args={"timeout": (10, 30)},
     )
 
 
