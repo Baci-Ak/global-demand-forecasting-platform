@@ -20,6 +20,7 @@ from io import BytesIO, StringIO
 import time
 
 import pandas as pd
+from pytrends.exceptions import TooManyRequestsError
 from sqlalchemy import text
 
 from app_config.config import settings
@@ -27,7 +28,10 @@ from audit_log.ingestion_audit_logger import fail_run, start_run, succeed_run
 from database.database import AuditSessionLocal, warehouse_engine
 from ingestion.s3_client import upload_fileobj_to_bronze
 from ingestion.trends.bronze_keys import build_trends_bronze_key
-from ingestion.trends.extract_google_trends import fetch_interest_over_time
+from ingestion.trends.extract_google_trends import (
+    fetch_interest_over_time,
+    make_trend_client,
+)
 from ingestion.trends.keywords_registry import TRENDS_KEYWORDS
 from ingestion.trends.provider_contract import SCHEMA_VERSION, SOURCE_NAME
 
@@ -35,12 +39,19 @@ from ingestion.trends.provider_contract import SCHEMA_VERSION, SOURCE_NAME
 # ------------------------------------------------------------------------------
 # Tunables
 # ------------------------------------------------------------------------------
-# Keep Google Trends requests modest to reduce provider throttling.
+# Chunk the full historical window so Google Trends requests stay reasonably small.
 TRENDS_CHUNK_DAYS = 180
-TRENDS_MAX_RETRIES_PER_CHUNK = 5
-TRENDS_BASE_SLEEP_SECONDS = 15
-TRENDS_SLEEP_BETWEEN_CHUNKS_SECONDS = 3
-TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS = 5
+
+# Retry settings for a single chunk.
+TRENDS_MAX_RETRIES_PER_CHUNK = 6
+TRENDS_BASE_SLEEP_SECONDS = 20
+
+# Cooldowns to reduce provider throttling.
+TRENDS_SLEEP_BETWEEN_CHUNKS_SECONDS = 8
+TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS = 45
+
+# If a single keyword keeps getting throttled, rebuild the TrendReq session and retry.
+TRENDS_MAX_SESSION_RESETS_PER_KEYWORD = 2
 
 
 # ------------------------------------------------------------------------------
@@ -87,15 +98,7 @@ def _build_date_chunks(
     chunk_days: int = TRENDS_CHUNK_DAYS,
 ) -> list[tuple[date, date]]:
     """
-    Split a large date range into smaller inclusive chunks.
-
-    Example:
-    - start_date=2011-01-29
-    - end_date=2016-04-24
-    - chunk_days=180
-
-    Returns a list like:
-    [(2011-01-29, 2011-07-27), (2011-07-28, ...), ...]
+    Split a large inclusive date range into smaller inclusive chunks.
     """
     if start_date > end_date:
         raise ValueError("start_date cannot be after end_date")
@@ -111,6 +114,14 @@ def _build_date_chunks(
     return chunks
 
 
+def _sleep_with_backoff(attempt: int) -> None:
+    """
+    Sleep using increasing backoff to reduce repeated 429 throttling.
+    """
+    sleep_seconds = TRENDS_BASE_SLEEP_SECONDS * attempt
+    time.sleep(sleep_seconds)
+
+
 def _fetch_interest_over_time_chunked(
     *,
     keyword: str,
@@ -122,17 +133,25 @@ def _fetch_interest_over_time_chunked(
     Fetch Google Trends over the full requested period by chunking the date range
     into smaller windows and retrying each chunk with backoff.
 
-    This keeps full history while being much more resilient to HTTP 429 throttling.
+    Operational behavior
+    --------------------
+    - Reuses one TrendReq session across the keyword where possible.
+    - If repeated 429s occur, rebuilds the session and retries.
+    - Preserves full history by stitching chunk results back together.
     """
     chunks = _build_date_chunks(start_date=start_date, end_date=end_date)
     frames: list[pd.DataFrame] = []
 
+    pytrends = make_trend_client()
+    session_reset_count = 0
+
     for idx, (chunk_start, chunk_end) in enumerate(chunks, start=1):
-        last_error: Exception | None = None
+        chunk_completed = False
 
         for attempt in range(1, TRENDS_MAX_RETRIES_PER_CHUNK + 1):
             try:
                 df = fetch_interest_over_time(
+                    pytrends=pytrends,
                     keyword=keyword,
                     start_date=chunk_start,
                     end_date=chunk_end,
@@ -153,11 +172,39 @@ def _fetch_interest_over_time_chunked(
                     f"(rows={len(df)})"
                 )
 
+                chunk_completed = True
                 break
 
-            except Exception as e:
-                last_error = e
+            except TooManyRequestsError as e:
+                if attempt == TRENDS_MAX_RETRIES_PER_CHUNK:
+                    if session_reset_count < TRENDS_MAX_SESSION_RESETS_PER_KEYWORD:
+                        session_reset_count += 1
+                        pytrends = make_trend_client()
+                        print(
+                            f"Rebuilt Google Trends session for keyword={keyword} "
+                            f"after repeated 429s on chunk {chunk_start} -> {chunk_end} "
+                            f"(session_reset={session_reset_count}/{TRENDS_MAX_SESSION_RESETS_PER_KEYWORD})"
+                        )
+                        time.sleep(TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS)
+                        # restart retries for the same chunk using a fresh session
+                        break
 
+                    raise RuntimeError(
+                        f"Failed to fetch Google Trends for keyword={keyword} "
+                        f"chunk={chunk_start}..{chunk_end} after "
+                        f"{TRENDS_MAX_RETRIES_PER_CHUNK} attempts and "
+                        f"{TRENDS_MAX_SESSION_RESETS_PER_KEYWORD} session resets"
+                    ) from e
+
+                print(
+                    f"Retrying Trends chunk for keyword={keyword} "
+                    f"covering {chunk_start} -> {chunk_end} "
+                    f"(attempt {attempt}/{TRENDS_MAX_RETRIES_PER_CHUNK}) "
+                    f"due to 429 throttling"
+                )
+                _sleep_with_backoff(attempt)
+
+            except Exception as e:
                 if attempt == TRENDS_MAX_RETRIES_PER_CHUNK:
                     raise RuntimeError(
                         f"Failed to fetch Google Trends for keyword={keyword} "
@@ -165,16 +212,65 @@ def _fetch_interest_over_time_chunked(
                         f"{TRENDS_MAX_RETRIES_PER_CHUNK} attempts"
                     ) from e
 
-                sleep_seconds = TRENDS_BASE_SLEEP_SECONDS * attempt
                 print(
                     f"Retrying Trends chunk for keyword={keyword} "
                     f"covering {chunk_start} -> {chunk_end} "
                     f"(attempt {attempt}/{TRENDS_MAX_RETRIES_PER_CHUNK}, "
-                    f"sleep={sleep_seconds}s) due to: {type(e).__name__}: {e}"
+                    f"error={type(e).__name__}: {e})"
                 )
-                time.sleep(sleep_seconds)
+                _sleep_with_backoff(attempt)
 
-        # Small pause between successful chunks to reduce throttling pressure.
+        # If the chunk was not completed and we rebuilt session, retry the same chunk
+        # with the fresh session before moving on.
+        if not chunk_completed:
+            for attempt in range(1, TRENDS_MAX_RETRIES_PER_CHUNK + 1):
+                try:
+                    df = fetch_interest_over_time(
+                        pytrends=pytrends,
+                        keyword=keyword,
+                        start_date=chunk_start,
+                        end_date=chunk_end,
+                        geo=geo,
+                    )
+
+                    if df.empty:
+                        raise RuntimeError(
+                            f"No Google Trends data returned for keyword={keyword} "
+                            f"chunk={chunk_start}..{chunk_end}"
+                        )
+
+                    frames.append(df)
+
+                    print(
+                        f"Fetched Trends chunk {idx}/{len(chunks)} for keyword={keyword} "
+                        f"covering {chunk_start} -> {chunk_end} after session reset "
+                        f"(rows={len(df)})"
+                    )
+
+                    chunk_completed = True
+                    break
+
+                except Exception as e:
+                    if attempt == TRENDS_MAX_RETRIES_PER_CHUNK:
+                        raise RuntimeError(
+                            f"Failed to fetch Google Trends for keyword={keyword} "
+                            f"chunk={chunk_start}..{chunk_end} even after session reset"
+                        ) from e
+
+                    print(
+                        f"Retrying Trends chunk after session reset for keyword={keyword} "
+                        f"covering {chunk_start} -> {chunk_end} "
+                        f"(attempt {attempt}/{TRENDS_MAX_RETRIES_PER_CHUNK}, "
+                        f"error={type(e).__name__}: {e})"
+                    )
+                    _sleep_with_backoff(attempt)
+
+        if not chunk_completed:
+            raise RuntimeError(
+                f"Chunk fetch never completed for keyword={keyword} "
+                f"chunk={chunk_start}..{chunk_end}"
+            )
+
         if idx < len(chunks):
             time.sleep(TRENDS_SLEEP_BETWEEN_CHUNKS_SECONDS)
 
@@ -186,18 +282,14 @@ def _fetch_interest_over_time_chunked(
 
     combined = pd.concat(frames, ignore_index=True)
 
-    # pytrends returns a 'date' column after reset_index() in the extractor.
     if "date" not in combined.columns:
         raise RuntimeError(
             f"Expected Trends payload to contain a 'date' column for keyword={keyword}. "
             f"Found columns={list(combined.columns)}"
         )
 
-    # Normalize + deduplicate across chunk boundaries just in case.
     combined["date"] = pd.to_datetime(combined["date"]).dt.date
     combined = combined.sort_values("date")
-
-    # Keep the last row if duplicates somehow exist.
     combined = combined.drop_duplicates(subset=["date"], keep="last").reset_index(drop=True)
 
     return combined
@@ -273,7 +365,6 @@ def ingest_trends_to_bronze() -> None:
                 f"to s3://{bronze_bucket}/{s3_key}"
             )
 
-            # Small pause between keywords to reduce provider throttling.
             if idx < len(TRENDS_KEYWORDS):
                 time.sleep(TRENDS_SLEEP_BETWEEN_KEYWORDS_SECONDS)
 

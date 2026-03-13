@@ -22,21 +22,42 @@ from pytrends.request import TrendReq
 from app_config.config import settings
 
 
-# ------------------------------------------------------------------------------
-# Public extractor
-# ------------------------------------------------------------------------------
+def make_trend_client() -> TrendReq:
+    """
+    Create one reusable pytrends client.
+
+    Notes
+    -----
+    - Reuse the same client across many chunk requests to reduce repeated token
+      setup and session churn.
+    - pytrends supports retries/backoff_factor/proxies in TrendReq.
+    """
+    return TrendReq(
+        hl="en-US",
+        tz=0,
+        retries=3,
+        backoff_factor=0.5,
+        proxies=getattr(settings, "TRENDS_PROXIES", None) or [],
+        requests_args={"timeout": (10, 30)},
+    )
+
+
 def fetch_interest_over_time(
     *,
+    pytrends: TrendReq,
     keyword: str,
     start_date: date,
     end_date: date,
     geo: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Fetch Google Trends interest-over-time data for a single keyword.
+    Fetch Google Trends interest-over-time data for a single keyword and window.
 
     Parameters
     ----------
+    pytrends:
+        Reusable TrendReq client.
+
     keyword:
         Search term to query.
 
@@ -57,7 +78,6 @@ def fetch_interest_over_time(
     resolved_geo = geo or settings.TRENDS_GEO or "US"
     timeframe = f"{start_date.isoformat()} {end_date.isoformat()}"
 
-    pytrends = TrendReq(hl="en-US", tz=0)
     pytrends.build_payload(
         kw_list=[keyword],
         cat=0,
@@ -74,6 +94,4 @@ def fetch_interest_over_time(
     if "isPartial" in df.columns:
         df = df.drop(columns=["isPartial"])
 
-    df = df.reset_index()
-
-    return df
+    return df.reset_index()
