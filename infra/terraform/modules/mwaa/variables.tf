@@ -217,3 +217,30 @@ variable "data_bucket_names" {
   type        = list(string)
   default     = []
 }
+
+
+
+
+variable "ecs_ml_cluster_arn" {
+  description = "ARN of the ECS cluster used for ML runtime jobs."
+  type        = string
+  default     = null
+}
+
+variable "ecs_ml_task_definition_arn" {
+  description = "ARN of the ECS task definition used for ML runtime jobs."
+  type        = string
+  default     = null
+}
+
+variable "ecs_ml_task_role_arn" {
+  description = "ARN of the ECS task role assumed by ML runtime containers."
+  type        = string
+  default     = null
+}
+
+variable "ecs_ml_execution_role_arn" {
+  description = "ARN of the ECS task execution role used by ML runtime jobs."
+  type        = string
+  default     = null
+}

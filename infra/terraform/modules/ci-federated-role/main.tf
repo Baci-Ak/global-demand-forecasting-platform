@@ -109,6 +109,25 @@ resource "aws_iam_role_policy" "mwaa_apply" {
         Resource = var.mwaa_execution_role_arn
       },
       {
+        Sid    = "S3ListMwaaBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = var.mwaa_bucket_arn
+      },
+      {
+        Sid    = "S3ManageMwaaBucketObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = var.mwaa_bucket_objects_arn
+      },
+      {
         Sid    = "CloudWatchLogsDescribeGlobal"
         Effect = "Allow"
         Action = [

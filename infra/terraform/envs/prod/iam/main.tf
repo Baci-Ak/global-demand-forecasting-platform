@@ -42,7 +42,7 @@ module "github_actions_ci_role" {
   role_name = "${var.project_name}-${var.environment}-github-actions"
 
   # OIDC configuration
-  oidc_provider_arn = var.github_oidc_provider_arn
+  oidc_provider_arn = aws_iam_openid_connect_provider.github_actions.arn
   oidc_audience     = var.github_oidc_audience
 
   oidc_subjects = [
@@ -59,6 +59,9 @@ module "github_actions_ci_role" {
 
   # CloudWatch log groups for MWAA
   cloudwatch_log_group_prefix = "arn:aws:logs:${var.aws_region}:*:log-group:airflow-${var.project_name}-${var.environment}-mwaa-"
+
+  mwaa_bucket_arn         = "arn:aws:s3:::${var.project_name}-${var.environment}-airflow-${data.aws_caller_identity.current.account_id}"
+  mwaa_bucket_objects_arn = "arn:aws:s3:::${var.project_name}-${var.environment}-airflow-${data.aws_caller_identity.current.account_id}/*"
 
   tags = {
     project     = var.project_name

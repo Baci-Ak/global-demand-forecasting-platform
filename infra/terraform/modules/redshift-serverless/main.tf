@@ -109,7 +109,8 @@ resource "aws_iam_role_policy" "redshift_copy_s3_policy" {
         Effect = "Allow"
         Action = [
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:PutObject"
         ]
         Resource = "*"
       }

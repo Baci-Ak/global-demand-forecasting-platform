@@ -89,3 +89,9 @@ orchestration/airflow/logs/
 infra/vpn/pki/**
 !infra/vpn/pki/README.md
 !infra/terraform/bin/.env.example
+
+
+
+
+
+!training/data/**

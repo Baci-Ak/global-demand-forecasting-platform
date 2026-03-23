@@ -15,14 +15,36 @@ from __future__ import annotations
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-from training.config import get_warehouse_dsn
+from training.configs.config import get_warehouse_dsn
+from training.settings import get_training_settings
 
 
 def get_training_engine():
     """
     Create and return a SQLAlchemy engine for training data access.
+
+    The warehouse secret may still be stored with a PostgreSQL-style DSN,
+    but the production warehouse is Redshift. SQLAlchemy must therefore
+    use a Redshift dialect, otherwise it issues PostgreSQL-only session
+    commands such as `show standard_conforming_strings`, which Redshift
+    does not support.
     """
-    return create_engine(get_warehouse_dsn())
+    warehouse_dsn = get_warehouse_dsn()
+
+    if warehouse_dsn.startswith("postgresql+psycopg2://"):
+        warehouse_dsn = warehouse_dsn.replace(
+            "postgresql+psycopg2://",
+            "redshift+psycopg2://",
+            1,
+        )
+    elif warehouse_dsn.startswith("postgresql://"):
+        warehouse_dsn = warehouse_dsn.replace(
+            "postgresql://",
+            "redshift+psycopg2://",
+            1,
+        )
+
+    return create_engine(warehouse_dsn)
 
 
 def load_top_series_subset(limit_series: int = 20) -> pd.DataFrame:
@@ -144,4 +166,62 @@ def load_full_modeling_dataset() -> pd.DataFrame:
         result = conn.execute(text(query))
         df = pd.DataFrame(result.fetchall(), columns=result.keys())
 
+    return df
+
+
+
+def load_modeling_dataset_from_s3(prefix: str) -> pd.DataFrame:
+    """
+    Load a parquet training extract from S3 and return one dataframe.
+
+    Notes
+    -----
+    - Redshift UNLOAD writes parquet files to the configured prefix.
+    - boto3 get_object()["Body"] returns a StreamingBody, which is not seekable.
+      pandas/pyarrow parquet readers require a seekable buffer, so each object
+      is first copied into an in-memory BytesIO buffer before reading.
+    """
+    import io
+    import boto3
+
+    settings = get_training_settings()
+
+    if not settings.TRAINING_EXTRACTS_BUCKET:
+        raise ValueError(
+            "TRAINING_EXTRACTS_BUCKET is not configured. "
+            "Set TRAINING_EXTRACTS_BUCKET in the environment."
+        )
+
+    s3 = boto3.client("s3")
+
+    response = s3.list_objects_v2(
+        Bucket=settings.TRAINING_EXTRACTS_BUCKET,
+        Prefix=prefix,
+    )
+
+    keys = sorted(
+        obj["Key"]
+        for obj in response.get("Contents", [])
+        if obj["Key"].endswith(".parquet")
+    )
+
+    if not keys:
+        raise ValueError(
+            f"No parquet extract files found at "
+            f"s3://{settings.TRAINING_EXTRACTS_BUCKET}/{prefix}"
+        )
+
+    parts: list[pd.DataFrame] = []
+
+    for key in keys:
+        obj = s3.get_object(
+            Bucket=settings.TRAINING_EXTRACTS_BUCKET,
+            Key=key,
+        )
+
+        buffer = io.BytesIO(obj["Body"].read())
+        part_df = pd.read_parquet(buffer)
+        parts.append(part_df)
+
+    df = pd.concat(parts, ignore_index=True)
     return df

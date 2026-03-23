@@ -57,3 +57,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "mwaa_bucket_arn" {
+  description = "ARN of the MWAA S3 bucket used for DAG and runtime artifact deployment."
+  type        = string
+}
+
+variable "mwaa_bucket_objects_arn" {
+  description = "ARN pattern for objects inside the MWAA S3 bucket."
+  type        = string
+}

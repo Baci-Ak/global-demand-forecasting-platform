@@ -43,6 +43,7 @@ P_RDS_HOST="${P_BASE}/rds/endpoint_host"
 P_RDS_PORT="${P_BASE}/rds/port"
 P_REDSHIFT_HOST="${P_BASE}/redshift/endpoint_host"
 P_REDSHIFT_PORT="${P_BASE}/redshift/port"
+P_MLFLOW_HOST="${P_BASE}/mlflow/host"
 
 getp() {
   local name="$1"
@@ -120,9 +121,22 @@ case "$CMD" in
     start_tunnel "$RS_HOST" "$RS_PORT" "$LOCAL_PORT"
     ;;
 
+  mlflow)
+    MLFLOW_HOST="$(getp "$P_MLFLOW_HOST")"
+    LOCAL_PORT="${LOCAL_PORT:-5000}"
+
+    echo
+    echo "Open in your browser:"
+    echo "  http://127.0.0.1:${LOCAL_PORT}/"
+    echo "Keep this terminal open while using the UI."
+    echo
+
+    start_tunnel "$MLFLOW_HOST" "5000" "$LOCAL_PORT"
+    ;;
+
   *)
     echo "Unknown command: $CMD"
-    echo "Usage: $0 {mwaa|postgres|redshift}"
+    echo "Usage: $0 {mwaa|postgres|redshift|mlflow}"
     exit 2
     ;;
 esac

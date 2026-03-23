@@ -66,3 +66,35 @@ resource "aws_secretsmanager_secret_version" "postgres_dsn" {
     module.rds_postgres.db_name
   )
 }
+
+# ------------------------------------------------------------------------------
+# Convenience secret: MLFLOW backend store DSN
+# - Separate from the app audit DSN so MLflow can use its own schema safely.
+# ------------------------------------------------------------------------------
+
+resource "aws_secretsmanager_secret" "mlflow_postgres_dsn" {
+  name        = "${var.project_name}/${var.environment}/mlflow_postgres_dsn"
+  description = "MLflow backend store DSN for the audit Postgres database."
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-mlflow-postgres-dsn"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "mlflow_postgres_dsn" {
+  secret_id = aws_secretsmanager_secret.mlflow_postgres_dsn.id
+
+  secret_string = format(
+    "postgresql://%s:%s@%s:%s/%s?options=-csearch_path%%3Dmlflow",
+    var.db_username,
+    random_password.db_master.result,
+    module.rds_postgres.endpoint,
+    module.rds_postgres.port,
+    module.rds_postgres.db_name
+  )
+}
+
+
+
+
+

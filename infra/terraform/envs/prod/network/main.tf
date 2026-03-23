@@ -53,9 +53,13 @@ module "vpc_endpoints" {
     "sqs",
     "monitoring",
     "kms",
-    "airflow.api",
-    "airflow.env",
-    "airflow.ops"
+    "secretsmanager",
+    "ecr.api",
+    "ecr.dkr",
+    "ssm",
+    "airflow_api",
+    "airflow_env",
+    "airflow_ops"
   ]
 
   enable_private_dns = true

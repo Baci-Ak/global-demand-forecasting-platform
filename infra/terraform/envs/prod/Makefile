@@ -40,8 +40,7 @@ TERRAFORM ?= terraform
 #
 # Keep this list aligned with directories in this folder.
 # ==============================================================================
-STACKS := iam network ssm-jumphost s3 rds-postgres redshift mwaa monitoring
-
+STACKS := iam network ssm-jumphost s3 rds-postgres redshift ecr-ml ecs-ml mlflow mwaa monitoring
 # ==============================================================================
 # Phony targets
 # ------------------------------------------------------------------------------

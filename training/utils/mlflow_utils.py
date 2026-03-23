@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import mlflow
 
-from training.config import get_mlflow_tracking_uri
-
+from training.configs.config import get_mlflow_tracking_uri
 
 def configure_mlflow() -> None:
     """

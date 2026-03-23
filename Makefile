@@ -42,6 +42,7 @@ AWS_REGION ?= us-east-1
 	aws-db-upgrade \
 	s3-smoke s3-upload s3-list \
 	test-mlflow test-kaggle download-kaggle ingest-m5 \
+	train-random-forest train-lightgbm \
 	dq-calendar dq-sell-prices dq-sales-train-validation dq-all \
 	warehouse-load-calendar warehouse-load-sell-prices warehouse-load-sales-train-validation warehouse-stage-all \
 	dbt-debug dbt-init-staging dbt-run-silver dbt-test-silver dbt-run-gold dbt-test-gold dbt-docs \
@@ -51,7 +52,8 @@ AWS_REGION ?= us-east-1
 	mwaa-upload-alembic \
 	mwaa-build-wheel mwaa-upload-wheel \
 	pkg-install \
-	tunnel-mwaa-ui tunnel-rds-audit tunnel-redshift
+	tunnel-mwaa-ui tunnel-rds-audit tunnel-redshift \
+	update-tf-backend-refs
 
 
 # ==============================================================================
@@ -129,6 +131,9 @@ local-ps:
 
 local-logs:
 	docker compose logs -f --tail=200
+
+
+
 
 
 # ==============================================================================
@@ -233,7 +238,7 @@ for o in resp.get('Contents', []): \
 # Pipelines
 # ==============================================================================
 test-mlflow:
-	python training/test_mlflow.py
+	python -m training.tests.test_mlflow
 
 test-kaggle:
 	python -c "from ingestion.kaggle_client import kaggle_smoke_test; kaggle_smoke_test()"
@@ -283,10 +288,27 @@ train-random-forest:
 	AWS_ACCESS_KEY_ID=$(MINIO_ACCESS_KEY) \
 	AWS_SECRET_ACCESS_KEY=$(MINIO_SECRET_KEY) \
 	MLFLOW_S3_ENDPOINT_URL=$(MLFLOW_S3_ENDPOINT_URL) \
-	python -m training.train_random_forest
+	python -m training.pipelines.train_random_forest
+
+
+train-lightgbm:
+	AWS_ACCESS_KEY_ID=$(MINIO_ACCESS_KEY) \
+	AWS_SECRET_ACCESS_KEY=$(MINIO_SECRET_KEY) \
+	MLFLOW_S3_ENDPOINT_URL=$(MLFLOW_S3_ENDPOINT_URL) \
+	python -m training.pipelines.train_lightgbm
+
+
+export-training-extract:
+	python -m training.data_extract.export_training_extract
 
 
 
+
+predict-next-28-days:
+	AWS_ACCESS_KEY_ID=$(MINIO_ACCESS_KEY) \
+	AWS_SECRET_ACCESS_KEY=$(MINIO_SECRET_KEY) \
+	MLFLOW_S3_ENDPOINT_URL=$(MLFLOW_S3_ENDPOINT_URL) \
+	python -m training.pipelines.predict_next_28_days
 
 # ==============================================================================
 # Warehouse (staging loaders + dbt)
@@ -358,7 +380,7 @@ aws-azs:
 # - These targets only upload to S3. They do NOT modify MWAA environment settings.
 # - Terraform controls which S3 object versions MWAA uses.
 # ==============================================================================
-MWAA_DAG_BUCKET       ?= gdf-prod-airflow
+MWAA_DAG_BUCKET       ?= gdf-prod-airflow-697980229152
 MWAA_DAG_PREFIX       ?= airflow/dags
 MWAA_REQ_PREFIX       ?= airflow/requirements
 MWAA_PLUGINS_PREFIX   ?= airflow/plugins
@@ -465,7 +487,7 @@ tunnel-redshift:
 # change here to either dev or prod depending your environment
 ENVIRONMENT ?= prod
 
-.PHONY: connect-mwaa connect-postgres connect-redshift connect-mwaa-mac
+.PHONY: connect-mwaa connect-postgres connect-redshift connect-mwaa-mac connect-mlflow
 
 connect-mwaa:
 	@chmod +x infra/terraform/bin/connect_dev.sh
@@ -479,12 +501,25 @@ connect-redshift:
 	@chmod +x infra/terraform/bin/connect_dev.sh
 	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/connect_dev.sh redshift
 
+connect-mlflow:
+	@chmod +x infra/terraform/bin/connect_dev.sh
+	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/connect_dev.sh mlflow
+
 # macOS convenience for MWAA: binds 443 + hosts mapping
 connect-mwaa-mac:
 	@chmod +x infra/terraform/bin/gdf-dev-connect-mwaa-mac.sh
 	@AWS_REGION=$(AWS_REGION) ENVIRONMENT=$(ENVIRONMENT) infra/terraform/bin/gdf-dev-connect-mwaa-mac.sh
 
 
+
+
+#Usage: make update-tf-backend-refs OLD_BUCKET=gdf-prod-tfstate-2fb849 NEW_BUCKET=gdf-prod-tfstate-954ec8
+
+update-tf-backend-refs:
+	@test -n "$(OLD_BUCKET)" || (echo "ERROR: set OLD_BUCKET=old-bucket-name" && exit 1)
+	@test -n "$(NEW_BUCKET)" || (echo "ERROR: set NEW_BUCKET=new-bucket-name" && exit 1)
+	@chmod +x infra/terraform/bin/update_tf_backend_references.sh
+	@infra/terraform/bin/update_tf_backend_references.sh "$(OLD_BUCKET)" "$(NEW_BUCKET)"
 
 # ==============================================================================
 # MWAA (CI deploy helpers)
@@ -535,3 +570,97 @@ mwaa-ci-deploy: mwaa-ci-setup
 	@echo "  wheel         s3://$(MWAA_DAG_BUCKET)/$(MWAA_WHEEL_PREFIX)/"
 	@echo ""
 	@echo "Done."
+
+
+
+
+
+
+# ==============================================================================
+# ML runtime container
+# - Build locally
+# - Smoke test locally
+# - Tag/push to the Terraform-managed prod ECR repository
+# - Source of truth for the ECR repo URL: SSM Parameter Store
+# ==============================================================================
+
+ECR_ML_REPOSITORY_URL_SSM_PARAM ?= /gdf/$(ENVIRONMENT)/ecr/ml_repository_url
+IMAGE_TAG ?= latest
+
+docker-build-ml-runtime:
+	docker buildx build \
+		--platform linux/amd64 \
+		-t gdf-ml-runtime \
+		-f docker/ml-runtime/Dockerfile \
+		--load .
+
+docker-run-ml-runtime-smoke:
+	docker run --rm gdf-ml-runtime
+
+docker-resolve-ml-runtime-ecr:
+	@aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text
+
+docker-login-ml-runtime-ecr:
+	@ECR_URL="$$(aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text)"; \
+	aws ecr get-login-password --region $(AWS_REGION) | \
+	docker login --username AWS --password-stdin "$$ECR_URL"
+
+docker-tag-ml-runtime:
+	@ECR_URL="$$(aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text)"; \
+	docker tag gdf-ml-runtime:latest "$$ECR_URL:$(IMAGE_TAG)"
+
+docker-push-ml-runtime:
+	@ECR_URL="$$(aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text)"; \
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin "$$ECR_URL"; \
+	docker buildx build \
+		--platform linux/amd64 \
+		-t "$$ECR_URL:$(IMAGE_TAG)" \
+		-f docker/ml-runtime/Dockerfile \
+		--push .
+
+
+
+
+docker-build-mlflow:
+	docker buildx build \
+		--platform linux/amd64 \
+		-t gdf-mlflow \
+		-f docker/mlflow/Dockerfile \
+		--load .
+
+docker-tag-mlflow:
+	@ECR_URL="$$(aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text)"; \
+	docker tag gdf-mlflow:latest "$$ECR_URL:mlflow-2.14.3"
+
+docker-push-mlflow:
+	@ECR_URL="$$(aws ssm get-parameter \
+		--region $(AWS_REGION) \
+		--name "$(ECR_ML_REPOSITORY_URL_SSM_PARAM)" \
+		--query 'Parameter.Value' \
+		--output text)"; \
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin "$$ECR_URL"; \
+	docker buildx build \
+		--platform linux/amd64 \
+		-t "$$ECR_URL:mlflow-2.14.3" \
+		-f docker/mlflow/Dockerfile \
+		--push .

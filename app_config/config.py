@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     MLFLOW_TRACKING_URI: str | None = None
     MLFLOW_ARTIFACT_BUCKET: str | None = None
 
+    MLFLOW_PROD_ARTIFACT_BUCKET: str | None = None
+
     # -------------------------
     # Data Lake
     # -------------------------

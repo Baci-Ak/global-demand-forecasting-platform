@@ -30,10 +30,10 @@ variable "aws_region" {
 # ------------------------------------------------------------------------------
 # CI/CD federated role inputs
 # ------------------------------------------------------------------------------
-variable "github_oidc_provider_arn" {
-  description = "ARN of the GitHub Actions OIDC provider."
-  type        = string
-}
+#variable "github_oidc_provider_arn" {
+  #description = "ARN of the GitHub Actions OIDC provider."
+  #type        = string
+#}
 
 variable "github_oidc_audience" {
   description = "Audience expected in GitHub OIDC tokens."

@@ -66,6 +66,48 @@ data "terraform_remote_state" "mwaa" {
   )
 }
 
+# ------------------------------------------------------------------------------
+# Remote state: Elastic Container Registry (ecr)
+# ------------------------------------------------------------------------------
+
+data "terraform_remote_state" "ecr_ml" {
+  backend = "s3"
+  config = merge(
+    { key = "envs/prod/ecr-ml/terraform.tfstate", use_lockfile = true },
+    yamldecode(file("${path.module}/remote_state.hcl"))
+  )
+}
+
+
+# ------------------------------------------------------------------------------
+# Remote state: Amazon Elastic Container Service (ecs)
+# ------------------------------------------------------------------------------
+
+data "terraform_remote_state" "ecs_ml" {
+  backend = "s3"
+  config = merge(
+    { key = "envs/prod/ecs-ml/terraform.tfstate", use_lockfile = true },
+    yamldecode(file("${path.module}/remote_state.hcl"))
+  )
+}
+
+
+data "terraform_remote_state" "mlflow" {
+  backend = "s3"
+  config = merge(
+    { key = "envs/prod/mlflow/terraform.tfstate", use_lockfile = true },
+    yamldecode(file("${path.module}/remote_state.hcl"))
+  )
+}
+
+
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = merge(
+    { key = "envs/prod/network/terraform.tfstate", use_lockfile = true },
+    yamldecode(file("${path.module}/remote_state.hcl"))
+  )
+}
 
 
 # ------------------------------------------------------------------------------

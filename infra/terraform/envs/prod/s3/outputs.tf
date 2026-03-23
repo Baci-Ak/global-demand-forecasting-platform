@@ -39,3 +39,28 @@ output "airflow_bucket_id" {
   description = "ID of the dev MWAA (Airflow runtime) bucket."
   value       = module.airflow_bucket.bucket_id
 }
+
+
+
+
+
+output "mlflow_artifacts_bucket_name" {
+  description = "Name of the production S3 bucket used for MLflow model and run artifacts."
+  value       = module.mlflow_artifacts_bucket.bucket_name
+}
+
+output "mlflow_artifacts_bucket_arn" {
+  description = "ARN of the production S3 bucket used for MLflow model and run artifacts."
+  value       = module.mlflow_artifacts_bucket.bucket_arn
+}
+
+output "mlflow_artifacts_bucket_id" {
+  description = "ID of the production S3 bucket used for MLflow model and run artifacts."
+  value       = module.mlflow_artifacts_bucket.bucket_id
+}
+
+
+output "training_extracts_bucket_name" {
+  description = "S3 bucket name for ML training extracts."
+  value       = module.training_extracts_bucket.bucket_name
+}

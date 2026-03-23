@@ -69,10 +69,6 @@ variable "airflow_configuration_options" {
 # Source bucket (DAGs + optional artifacts)
 # ------------------------------------------------------------------------------
 
-variable "dag_s3_bucket" {
-  description = "S3 bucket name holding Airflow DAGs and optional MWAA artifacts."
-  type        = string
-}
 
 variable "dag_s3_path" {
   description = "S3 prefix for DAGs inside the bucket (no leading slash)."

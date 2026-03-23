@@ -4,10 +4,6 @@
 #
 # Purpose
 # - Inputs for provisioning VPC endpoints required by private workloads.
-#
-# Notes
-# - MWAA in private subnets often needs PrivateLink endpoints for reliable access
-#   to AWS services (Logs/SQS/S3/KMS/CloudWatch).
 # ==============================================================================
 
 variable "project_name" {
@@ -52,7 +48,6 @@ variable "consumer_security_groups" {
   default     = {}
 }
 
-
 variable "enable_s3_gateway_endpoint" {
   description = "If true, create an S3 gateway endpoint for private route tables."
   type        = bool
@@ -60,21 +55,42 @@ variable "enable_s3_gateway_endpoint" {
 }
 
 variable "interface_endpoints" {
-  description = "List of interface endpoint short names to create (e.g., logs, sqs, monitoring, kms)."
-  type = list(string)
+  description = "List of interface endpoint short names to create."
+  type        = list(string)
+
   default = [
     "logs",
     "sqs",
     "monitoring",
     "kms",
-    "airflow.api",
-    "airflow.env",
-    "airflow.ops"
+    "airflow_api",
+    "airflow_env",
+    "airflow_ops"
   ]
+
+  validation {
+    condition = alltrue([
+      for ep in var.interface_endpoints :
+      contains([
+        "logs",
+        "sqs",
+        "monitoring",
+        "kms",
+        "secretsmanager",
+        "ecr.api",
+        "ecr.dkr",
+        "ssm",
+        "airflow_api",
+        "airflow_env",
+        "airflow_ops"
+      ], ep)
+    ])
+    error_message = "interface_endpoints contains an unsupported endpoint short name."
+  }
 }
 
 variable "enable_private_dns" {
-  description = "If true, enable private DNS for interface endpoints (recommended)."
+  description = "If true, enable private DNS for interface endpoints."
   type        = bool
   default     = true
 }

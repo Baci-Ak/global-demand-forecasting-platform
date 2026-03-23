@@ -38,7 +38,7 @@ WHEEL_TMP_PATH="/tmp"
 echo "[startup] Loading runtime config from S3..."
 
 # Prefer env var injection (dev/prod), fallback keeps current behaviour.
-GDF_RUNTIME_CONF_S3_URI="${GDF_RUNTIME_CONF_S3_URI:-s3://gdf-prod-airflow/airflow/startup/gdf_runtime.conf}"
+GDF_RUNTIME_CONF_S3_URI="${GDF_RUNTIME_CONF_S3_URI:-s3://gdf-prod-airflow-697980229152/airflow/startup/gdf_runtime.conf}"
 
 aws s3 cp "${GDF_RUNTIME_CONF_S3_URI}" "${RUNTIME_CONF_PATH}"
 chmod 600 "${RUNTIME_CONF_PATH}"
@@ -99,7 +99,7 @@ MACRO_API_KEY="$(aws secretsmanager get-secret-value \
 
 
 # ------------------------------------------------------------------------------
-# Install application wheel (keep exact filename; no renaming)
+# Install application wheel (keep exact filename; no renaming).
 # ------------------------------------------------------------------------------
 echo "[startup] Installing GDF wheel from S3..."
 
@@ -124,7 +124,7 @@ fi
 # Upgrade installer tooling inside the venv
 "${DBT_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
 
-# Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env) ..
+# Install dbt + adapter WITH dependencies inside the venv (isolated from Airflow env).
 "${DBT_VENV}/bin/pip" install "dbt-core==1.11.2" "dbt-redshift==1.10.0"
 
 # Verify

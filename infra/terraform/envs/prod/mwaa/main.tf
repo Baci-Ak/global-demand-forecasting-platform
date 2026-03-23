@@ -33,6 +33,13 @@ data "terraform_remote_state" "s3" {
 }
 
 
+data "terraform_remote_state" "ecs_ml" {
+  backend = "s3"
+  config = merge(
+    { key = "envs/prod/ecs-ml/terraform.tfstate", use_lockfile = true },
+    yamldecode(file("${path.module}/remote_state.hcl"))
+  )
+}
 
 
 
@@ -70,7 +77,7 @@ module "mwaa" {
   webserver_ingress_protocol = var.webserver_ingress_protocol
   enable_egress_all          = var.enable_egress_all
 
-  dag_s3_bucket = var.dag_s3_bucket
+  dag_s3_bucket = data.terraform_remote_state.s3.outputs.airflow_bucket_name
   dag_s3_path   = var.dag_s3_path
 
   requirements_s3_path   = var.requirements_s3_path
@@ -91,7 +98,10 @@ module "mwaa" {
 
 
 
-  logging_configuration         = var.logging_configuration
+  logging_configuration = var.logging_configuration
 
-  #alerts_sns_topic_arn = aws_sns_topic.mwaa_alerts.arn
+  ecs_ml_cluster_arn         = data.terraform_remote_state.ecs_ml.outputs.ecs_cluster_arn
+  ecs_ml_task_definition_arn = try(data.terraform_remote_state.ecs_ml.outputs.task_definition_arn, null)
+  ecs_ml_task_role_arn       = data.terraform_remote_state.ecs_ml.outputs.task_role_arn
+  ecs_ml_execution_role_arn  = data.terraform_remote_state.ecs_ml.outputs.task_execution_role_arn
 }
