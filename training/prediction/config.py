@@ -49,3 +49,7 @@ class PredictionConfig:
     write_local_artifact: bool = False
     output_dir: str = "artifacts/forecasts"
     output_filename: str = "next_28_days_forecast.parquet"
+
+
+    forecast_staging_s3_prefix: str = "ml/forecast_writeback/daily_item_store_forecasts"
+    forecast_write_chunksize: int = 5000

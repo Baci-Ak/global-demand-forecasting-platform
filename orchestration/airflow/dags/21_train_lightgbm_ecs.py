@@ -86,7 +86,7 @@ def default_args(*, retries: int = 1) -> dict[str, Any]:
 
 DAG_TZ = pendulum.timezone("Europe/London")
 DAG_START_DATE = pendulum.datetime(2024, 1, 1, tz=DAG_TZ)
-DAG_SCHEDULE = None
+DAG_SCHEDULE = "0 2 * * 1"
 DEFAULT_ARGS = default_args(retries=1)
 
 

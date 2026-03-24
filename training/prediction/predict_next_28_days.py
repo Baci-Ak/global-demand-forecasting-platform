@@ -140,11 +140,19 @@ def main() -> None:
     # ------------------------------------------------------------
     # Write forecasts to warehouse
     # ------------------------------------------------------------
+    # write_forecast_to_warehouse(
+    #     forecast_df=forecast_write_df,
+    #     forecast_schema=config.forecast_schema,
+    #     forecast_table=config.forecast_table,
+    # )
+
     write_forecast_to_warehouse(
         forecast_df=forecast_write_df,
         forecast_schema=config.forecast_schema,
         forecast_table=config.forecast_table,
-    )
+        staging_s3_prefix=config.forecast_staging_s3_prefix,
+        write_chunksize=config.forecast_write_chunksize,
+        )
 
     # ------------------------------------------------------------
     # Optional local debug artifact
