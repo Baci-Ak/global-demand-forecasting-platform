@@ -67,3 +67,19 @@ variable "mwaa_bucket_objects_arn" {
   description = "ARN pattern for objects inside the MWAA S3 bucket."
   type        = string
 }
+
+
+variable "ml_ecr_repository_arn" {
+  description = "ARN of the ECR repository used for ML runtime and MLflow image pushes."
+  type        = string
+}
+
+variable "ml_ecr_repository_objects_arn" {
+  description = "ARN pattern for all images and tags inside the ML ECR repository."
+  type        = string
+}
+
+variable "ml_ecr_ssm_parameter_arn" {
+  description = "ARN of the SSM parameter that stores the ML ECR repository URL."
+  type        = string
+}

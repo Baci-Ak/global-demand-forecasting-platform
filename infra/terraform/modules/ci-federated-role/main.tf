@@ -109,6 +109,35 @@ resource "aws_iam_role_policy" "mwaa_apply" {
         Resource = var.mwaa_execution_role_arn
       },
       {
+        Sid    = "ReadMlEcrRepositoryUrlFromSsm"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter"
+        ]
+        Resource = var.ml_ecr_ssm_parameter_arn
+      },
+      {
+        Sid    = "GetEcrAuthorizationToken"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "PushMlImagesToEcr"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:BatchGetImage",
+          "ecr:PutImage"
+        ]
+        Resource = var.ml_ecr_repository_arn
+      },
+      {
         Sid    = "S3ListMwaaBucket"
         Effect = "Allow"
         Action = [

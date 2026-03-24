@@ -634,7 +634,14 @@ docker-push-ml-runtime:
 		-f docker/ml-runtime/Dockerfile \
 		--push .
 
+.PHONY: mlops-ci-push-ml-runtime
 
+mlops-ci-push-ml-runtime:
+	@echo "== MLOps CI: push ML runtime image =="
+	@echo "Environment: $(ENVIRONMENT)"
+	@echo "Region:      $(AWS_REGION)"
+	@echo "Image tag:   $(IMAGE_TAG)"
+	@$(MAKE) docker-push-ml-runtime
 
 
 docker-build-mlflow:
@@ -664,3 +671,14 @@ docker-push-mlflow:
 		-t "$$ECR_URL:mlflow-2.14.3" \
 		-f docker/mlflow/Dockerfile \
 		--push .
+
+
+
+.PHONY: mlops-ci-push-mlflow
+
+mlops-ci-push-mlflow:
+	@echo "== MLOps CI: push MLflow image =="
+	@echo "Environment: $(ENVIRONMENT)"
+	@echo "Region:      $(AWS_REGION)"
+	@echo "Image tag:   mlflow-2.14.3"
+	@$(MAKE) docker-push-mlflow

@@ -1,0 +1,106 @@
+# ==============================================================================
+# Prod - Deploy ML Images (manual)
+# ==============================================================================
+#
+# Purpose
+# - Build and push production ML container images to ECR on demand.
+# - Provide a controlled GitHub Actions path for MLOps image publishing.
+#
+# Scope
+# - ML runtime image:
+#   - used by ECS batch jobs for training, retraining, extract export, and batch
+#     inference
+# - MLflow image:
+#   - used by the MLflow service deployment path
+#
+# Safety
+# - Uses GitHub Environment: prod
+# - Uses GitHub OIDC to assume the AWS deploy role
+# - Manual trigger only, so image publishing is explicit and reviewable
+#
+# Notes
+# - Current design uses a single ECR repository with different tags.
+# - ml-runtime uses the caller-provided image_tag input.
+# - mlflow currently uses its fixed Makefile-managed tag.
+# ==============================================================================
+
+name: Prod - Deploy ML Images (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_target:
+        description: "Which production image to build and push"
+        required: true
+        default: "ml-runtime"
+        type: choice
+        options:
+          - ml-runtime
+          - mlflow
+      image_tag:
+        description: "Image tag for ml-runtime (ignored for mlflow)"
+        required: false
+        default: "latest"
+        type: string
+
+# ------------------------------------------------------------------------------
+# Concurrency
+# - Prevent overlapping manual image deploys in prod.
+# ------------------------------------------------------------------------------
+concurrency:
+  group: prod-ml-images-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ENVIRONMENT: prod
+      IMAGE_TAG: ${{ inputs.image_tag }}
+
+    steps:
+      # ------------------------------------------------------------------------
+      # Source
+      # ------------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------------
+      # Auth (OIDC)
+      # ------------------------------------------------------------------------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ------------------------------------------------------------------------
+      # Docker build tooling
+      # ------------------------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ------------------------------------------------------------------------
+      # Deploy: ML runtime image
+      # - Used by ECS ML runtime workloads
+      # ------------------------------------------------------------------------
+      - name: Push ML runtime image
+        if: ${{ inputs.image_target == 'ml-runtime' }}
+        run: |
+          make mlops-ci-push-ml-runtime
+
+      # ------------------------------------------------------------------------
+      # Deploy: MLflow image
+      # - Used by the MLflow service/container path
+      # ------------------------------------------------------------------------
+      - name: Push MLflow image
+        if: ${{ inputs.image_target == 'mlflow' }}
+        run: |
+          make mlops-ci-push-mlflow

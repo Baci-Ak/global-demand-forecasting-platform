@@ -63,6 +63,11 @@ module "github_actions_ci_role" {
   mwaa_bucket_arn         = "arn:aws:s3:::${var.project_name}-${var.environment}-airflow-${data.aws_caller_identity.current.account_id}"
   mwaa_bucket_objects_arn = "arn:aws:s3:::${var.project_name}-${var.environment}-airflow-${data.aws_caller_identity.current.account_id}/*"
 
+
+  ml_ecr_repository_arn         = "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.project_name}-${var.environment}-ml-runtime"
+  ml_ecr_repository_objects_arn = "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.project_name}-${var.environment}-ml-runtime"
+  ml_ecr_ssm_parameter_arn      = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/gdf/${var.environment}/ecr/ml_repository_url"
+
   tags = {
     project     = var.project_name
     environment = var.environment
