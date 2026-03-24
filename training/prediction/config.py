@@ -42,6 +42,7 @@ class PredictionConfig:
     history_days: int = 60
     forecast_horizon: int = 28
     feature_set_name: str = "calendar_lag_rolling_baseline"
+    
 
     forecast_schema: str = "forecast"
     forecast_table: str = "daily_item_store_forecasts"
@@ -49,7 +50,3 @@ class PredictionConfig:
     write_local_artifact: bool = False
     output_dir: str = "artifacts/forecasts"
     output_filename: str = "next_28_days_forecast.parquet"
-
-
-    forecast_staging_s3_prefix: str = "ml/forecast_writeback/daily_item_store_forecasts"
-    forecast_write_chunksize: int = 5000

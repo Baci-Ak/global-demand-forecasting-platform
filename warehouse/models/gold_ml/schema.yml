@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: gold_ml_forecast_run_monitoring
+    description: >
+      Monitoring view for production forecast batch runs, aggregated by
+      generation timestamp, model, version, and feature set.
+    columns:
+      - name: generated_at
+        description: "UTC timestamp when the forecast batch was generated."
+        data_tests:
+          - not_null
+
+      - name: model_name
+        description: "Registered model name used for the forecast run."
+        data_tests:
+          - not_null
+
+      - name: model_version
+        description: "Registered model version used for the forecast run."
+        data_tests:
+          - not_null
+
+      - name: feature_set_name
+        description: "Feature set used by the forecast run."
+        data_tests:
+          - not_null
+
+      - name: min_forecast_date
+        description: "Earliest forecast date produced in the batch."
+        data_tests:
+          - not_null
+
+      - name: max_forecast_date
+        description: "Latest forecast date produced in the batch."
+        data_tests:
+          - not_null
+
+      - name: forecast_row_count
+        description: "Total number of forecast rows produced in the batch."
+        data_tests:
+          - not_null
+
+      - name: forecast_series_count
+        description: "Total number of distinct item-store series forecasted in the batch."
+        data_tests:
+          - not_null
+
+
+
+  
+
+
+  - name: gold_ml_latest_forecast_freshness
+    description: >
+      Monitoring view for the most recent production forecast batch, used to
+      validate freshness, row counts, series coverage, and effective forecast horizon.
+    columns:
+      - name: generated_at
+        description: "UTC timestamp when the latest forecast batch was generated."
+        data_tests:
+          - not_null
+
+      - name: model_name
+        description: "Registered model name used for the latest forecast batch."
+        data_tests:
+          - not_null
+
+      - name: model_version
+        description: "Registered model version used for the latest forecast batch."
+        data_tests:
+          - not_null
+
+      - name: feature_set_name
+        description: "Feature set used by the latest forecast batch."
+        data_tests:
+          - not_null
+
+      - name: min_forecast_date
+        description: "Earliest forecast date in the latest batch."
+        data_tests:
+          - not_null
+
+      - name: max_forecast_date
+        description: "Latest forecast date in the latest batch."
+        data_tests:
+          - not_null
+
+      - name: forecast_row_count
+        description: "Total number of forecast rows in the latest batch."
+        data_tests:
+          - not_null
+
+      - name: forecast_series_count
+        description: "Total distinct item-store series in the latest batch."
+        data_tests:
+          - not_null
+
+      - name: forecast_horizon_days
+        description: "Number of days covered by the latest forecast batch."
+        data_tests:
+          - not_null
+
+
+
+      

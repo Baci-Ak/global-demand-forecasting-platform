@@ -353,6 +353,17 @@ dbt-run-gold:
 dbt-test-gold:
 	cd warehouse && dbt test --select models/gold --profiles-dir .dbt
 
+# ==============================================================================
+# dbt: ML monitoring models
+# ==============================================================================
+dbt-run-gold-ml:
+	cd warehouse && dbt run --select models/gold_ml --profiles-dir .dbt
+
+dbt-test-gold-ml:
+	cd warehouse && dbt test --select models/gold_ml --profiles-dir .dbt
+
+
+
 dbt-docs:
 	cd warehouse && dbt docs generate --profiles-dir .dbt
 
