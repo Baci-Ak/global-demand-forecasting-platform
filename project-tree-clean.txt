@@ -11,6 +11,7 @@
 │       ├── ./.github/workflows/dev-db-migrate.yml
 │       ├── ./.github/workflows/dev-deploy-mwaa.yml
 │       ├── ./.github/workflows/pipeline.yml
+│       ├── ./.github/workflows/prod-deploy-ml-images.yml
 │       └── ./.github/workflows/prod-deploy-mwaa.yml
 ├── ./.gitignore
 ├── ./.venv-dbt
@@ -23,6 +24,7 @@
 │   │   ├── ./.venv-dbt/bin/daff.py
 │   │   ├── ./.venv-dbt/bin/dbt
 │   │   ├── ./.venv-dbt/bin/deep
+│   │   ├── ./.venv-dbt/bin/jp.py
 │   │   ├── ./.venv-dbt/bin/jsonschema
 │   │   ├── ./.venv-dbt/bin/normalizer
 │   │   ├── ./.venv-dbt/bin/pip
@@ -56,167 +58,10 @@
 ├── ./app_config
 │   ├── ./app_config/__init__.py
 │   └── ./app_config/config.py
-├── ./artifacts
-│   ├── ./artifacts/.DS_Store
-│   ├── ./artifacts/forecasts
-│   │   └── ./artifacts/forecasts/top20_next_28_days.parquet
-│   ├── ./artifacts/gdf_modeling_design_contract.xlsx
-│   └── ./artifacts/training_extracts
-│       └── ./artifacts/training_extracts/top20_training_extract.parquet
 ├── ./audit_log
 │   ├── ./audit_log/__init__.py
 │   ├── ./audit_log/dq_audit_logger.py
 │   └── ./audit_log/ingestion_audit_logger.py
-├── ./build
-│   ├── ./build/bdist.macosx-11.0-arm64
-│   └── ./build/lib
-│       ├── ./build/lib/app_config
-│       │   ├── ./build/lib/app_config/__init__.py
-│       │   └── ./build/lib/app_config/config.py
-│       ├── ./build/lib/audit_log
-│       │   ├── ./build/lib/audit_log/__init__.py
-│       │   ├── ./build/lib/audit_log/dq_audit_logger.py
-│       │   └── ./build/lib/audit_log/ingestion_audit_logger.py
-│       ├── ./build/lib/database
-│       │   ├── ./build/lib/database/__init__.py
-│       │   ├── ./build/lib/database/database.py
-│       │   └── ./build/lib/database/models.py
-│       ├── ./build/lib/gdf
-│       │   ├── ./build/lib/gdf/__init__.py
-│       │   ├── ./build/lib/gdf/app_config.py
-│       │   ├── ./build/lib/gdf/audit_log.py
-│       │   ├── ./build/lib/gdf/database.py
-│       │   ├── ./build/lib/gdf/ingestion.py
-│       │   ├── ./build/lib/gdf/quality.py
-│       │   └── ./build/lib/gdf/warehouse.py
-│       ├── ./build/lib/ingestion
-│       │   ├── ./build/lib/ingestion/__init__.py
-│       │   ├── ./build/lib/ingestion/bronze_io.py
-│       │   ├── ./build/lib/ingestion/ingestion_queries.py
-│       │   ├── ./build/lib/ingestion/kaggle_client.py
-│       │   ├── ./build/lib/ingestion/m5_ingestion.py
-│       │   ├── ./build/lib/ingestion/macro
-│       │   │   ├── ./build/lib/ingestion/macro/__init__.py
-│       │   │   ├── ./build/lib/ingestion/macro/bronze_keys.py
-│       │   │   ├── ./build/lib/ingestion/macro/extract_fred.py
-│       │   │   ├── ./build/lib/ingestion/macro/macro_ingestion.py
-│       │   │   ├── ./build/lib/ingestion/macro/provider_contract.py
-│       │   │   └── ./build/lib/ingestion/macro/series_registry.py
-│       │   ├── ./build/lib/ingestion/s3_client.py
-│       │   ├── ./build/lib/ingestion/trends
-│       │   │   ├── ./build/lib/ingestion/trends/__init__.py
-│       │   │   ├── ./build/lib/ingestion/trends/bronze_keys.py
-│       │   │   ├── ./build/lib/ingestion/trends/extract_google_trends.py
-│       │   │   ├── ./build/lib/ingestion/trends/keywords_registry.py
-│       │   │   ├── ./build/lib/ingestion/trends/provider_contract.py
-│       │   │   └── ./build/lib/ingestion/trends/trends_ingestion.py
-│       │   └── ./build/lib/ingestion/weather
-│       │       ├── ./build/lib/ingestion/weather/__init__.py
-│       │       ├── ./build/lib/ingestion/weather/bronze_keys.py
-│       │       ├── ./build/lib/ingestion/weather/extract_openmeteo.py
-│       │       ├── ./build/lib/ingestion/weather/locations.py
-│       │       ├── ./build/lib/ingestion/weather/provider_contract.py
-│       │       └── ./build/lib/ingestion/weather/weather_ingestion.py
-│       ├── ./build/lib/quality
-│       │   ├── ./build/lib/quality/__init__.py
-│       │   ├── ./build/lib/quality/run_calendar_dq.py
-│       │   ├── ./build/lib/quality/run_macro_series_dq.py
-│       │   ├── ./build/lib/quality/run_sales_train_validation_dq.py
-│       │   ├── ./build/lib/quality/run_sell_prices_dq.py
-│       │   ├── ./build/lib/quality/run_trends_interest_over_time_dq.py
-│       │   ├── ./build/lib/quality/run_weather_daily_dq.py
-│       │   └── ./build/lib/quality/specs
-│       │       ├── ./build/lib/quality/specs/m5_calendar.py
-│       │       ├── ./build/lib/quality/specs/m5_sales_train_validation.py
-│       │       ├── ./build/lib/quality/specs/m5_sell_prices.py
-│       │       ├── ./build/lib/quality/specs/macro_series.py
-│       │       ├── ./build/lib/quality/specs/registry.py
-│       │       ├── ./build/lib/quality/specs/trends_interest_over_time.py
-│       │       └── ./build/lib/quality/specs/weather_daily.py
-│       └── ./build/lib/warehouse
-│           ├── ./build/lib/warehouse/.dbt
-│           │   └── ./build/lib/warehouse/.dbt/profiles.yml
-│           ├── ./build/lib/warehouse/__init__.py
-│           ├── ./build/lib/warehouse/dbt_project.yml
-│           ├── ./build/lib/warehouse/loaders
-│           │   ├── ./build/lib/warehouse/loaders/__init__.py
-│           │   ├── ./build/lib/warehouse/loaders/load_m5_calendar_to_staging.py
-│           │   ├── ./build/lib/warehouse/loaders/load_m5_sales_train_validation_to_staging.py
-│           │   ├── ./build/lib/warehouse/loaders/load_m5_sell_prices_to_staging.py
-│           │   ├── ./build/lib/warehouse/loaders/load_macro_series_to_staging.py
-│           │   ├── ./build/lib/warehouse/loaders/load_trends_interest_over_time_to_staging.py
-│           │   └── ./build/lib/warehouse/loaders/load_weather_daily_to_staging.py
-│           ├── ./build/lib/warehouse/macros
-│           │   ├── ./build/lib/warehouse/macros/drop_schema.sql
-│           │   ├── ./build/lib/warehouse/macros/generate_schema_name.sql
-│           │   └── ./build/lib/warehouse/macros/list_schemas.sql
-│           └── ./build/lib/warehouse/models
-│               ├── ./build/lib/warehouse/models/example
-│               │   ├── ./build/lib/warehouse/models/example/my_first_dbt_model.sql
-│               │   ├── ./build/lib/warehouse/models/example/my_second_dbt_model.sql
-│               │   └── ./build/lib/warehouse/models/example/schema.yml
-│               ├── ./build/lib/warehouse/models/gold
-│               │   ├── ./build/lib/warehouse/models/gold/gold_m5_daily_feature_mart.sql
-│               │   ├── ./build/lib/warehouse/models/gold/gold_m5_training_daily.sql
-│               │   ├── ./build/lib/warehouse/models/gold/gold_m5_training_daily_with_weather.sql
-│               │   └── ./build/lib/warehouse/models/gold/schema.yml
-│               ├── ./build/lib/warehouse/models/silver
-│               │   ├── ./build/lib/warehouse/models/silver/schema.yml
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_calendar.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales_with_external_features.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales_with_prices.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sales_with_weather.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_m5_sell_prices.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_macro_daily_aligned.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_macro_series.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_trends_daily_aligned.sql
-│               │   ├── ./build/lib/warehouse/models/silver/silver_trends_interest_over_time.sql
-│               │   └── ./build/lib/warehouse/models/silver/silver_weather_daily.sql
-│               ├── ./build/lib/warehouse/models/staging
-│               │   └── ./build/lib/warehouse/models/staging/_staging_schema_init.sql
-│               └── ./build/lib/warehouse/models/staging_sources.yml
-├── ./dashboard
-│   ├── ./dashboard/.streamlit
-│   │   └── ./dashboard/.streamlit/config.toml
-│   ├── ./dashboard/README.md
-│   ├── ./dashboard/SERVING_LAYER_SPEC.md
-│   ├── ./dashboard/__init__.py
-│   ├── ./dashboard/app.py
-│   ├── ./dashboard/assets
-│   ├── ./dashboard/components
-│   │   ├── ./dashboard/components/__init__.py
-│   │   ├── ./dashboard/components/empty_state.py
-│   │   ├── ./dashboard/components/filters.py
-│   │   ├── ./dashboard/components/kpi_strip.py
-│   │   ├── ./dashboard/components/status_badges.py
-│   │   └── ./dashboard/components/tables.py
-│   ├── ./dashboard/core
-│   │   ├── ./dashboard/core/__init__.py
-│   │   ├── ./dashboard/core/config.py
-│   │   ├── ./dashboard/core/constants.py
-│   │   ├── ./dashboard/core/navigation.py
-│   │   └── ./dashboard/core/state.py
-│   ├── ./dashboard/data
-│   ├── ./dashboard/services
-│   │   ├── ./dashboard/services/__init__.py
-│   │   ├── ./dashboard/services/audit.py
-│   │   ├── ./dashboard/services/data_access.py
-│   │   ├── ./dashboard/services/export_feature_mart.py
-│   │   ├── ./dashboard/services/extract.py
-│   │   ├── ./dashboard/services/feature_mart.py
-│   │   ├── ./dashboard/services/filter_options.py
-│   │   ├── ./dashboard/services/queries.py
-│   │   └── ./dashboard/services/warehouse.py
-│   └── ./dashboard/views
-│       ├── ./dashboard/views/__init__.py
-│       ├── ./dashboard/views/data_quality_freshness.py
-│       ├── ./dashboard/views/executive_overview.py
-│       ├── ./dashboard/views/external_drivers.py
-│       ├── ./dashboard/views/forecast_readiness.py
-│       ├── ./dashboard/views/pricing_commercial.py
-│       ├── ./dashboard/views/sales_demand.py
-│       └── ./dashboard/views/store_item_drilldown.py
 ├── ./database
 │   ├── ./database/__init__.py
 │   ├── ./database/database.py
@@ -250,12 +95,38 @@
 │   ├── ./docs/aws_ml_runtime_plan.md
 │   ├── ./docs/aws_warehouse_deployment_checklist.md
 │   ├── ./docs/ecs_ml_jobs_plan.md
+│   ├── ./docs/layer2_forecast_app_plan.md
+│   ├── ./docs/layer2_serving_architecture.md
+│   ├── ./docs/layer2_snapshot_export_plan.md
 │   ├── ./docs/ml_system_production_plan.md
 │   └── ./docs/platform
 │       ├── ./docs/platform/00_production_ml_platform_local_playbook.md
 │       ├── ./docs/platform/01_mwaa_deploy_cicd.md
 │       └── ./docs/platform/02_github_actions_oidc_iam.md
 ├── ./feature_store
+├── ./forecast_app
+│   ├── ./forecast_app/__init__.py
+│   ├── ./forecast_app/app.py
+│   ├── ./forecast_app/data_access
+│   │   ├── ./forecast_app/data_access/__init__.py
+│   │   ├── ./forecast_app/data_access/snapshot_reader.py
+│   │   └── ./forecast_app/data_access/warehouse_queries.py
+│   ├── ./forecast_app/direct_warehouse_read_app.py
+│   ├── ./forecast_app/local_cache
+│   │   ├── ./forecast_app/local_cache/forecast_rows.parquet
+│   │   ├── ./forecast_app/local_cache/forecast_run_monitoring.parquet
+│   │   ├── ./forecast_app/local_cache/latest_forecast_freshness.parquet
+│   │   └── ./forecast_app/local_cache/snapshot_metadata.json
+│   ├── ./forecast_app/settings.py
+│   ├── ./forecast_app/snapshot_export
+│   │   ├── ./forecast_app/snapshot_export/__init__.py
+│   │   ├── ./forecast_app/snapshot_export/config.py
+│   │   ├── ./forecast_app/snapshot_export/export_latest_snapshot.py
+│   │   ├── ./forecast_app/snapshot_export/queries.py
+│   │   └── ./forecast_app/snapshot_export/writer.py
+│   └── ./forecast_app/ui
+│       ├── ./forecast_app/ui/__init__.py
+│       └── ./forecast_app/ui/pages.py
 ├── ./gdf
 │   ├── ./gdf/__init__.py
 │   ├── ./gdf/app_config.py
@@ -391,12 +262,14 @@
 │       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/main.tf
 │       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/outputs.tf
 │       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/providers.tf
+│       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/remote_state.hcl
 │       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/terraform.tfvars
 │       │       │   ├── ./infra/terraform/envs/prod/ecs-ml/variables.tf
 │       │       │   └── ./infra/terraform/envs/prod/ecs-ml/versions.tf
 │       │       ├── ./infra/terraform/envs/prod/iam
 │       │       │   ├── ./infra/terraform/envs/prod/iam/backend.hcl
 │       │       │   ├── ./infra/terraform/envs/prod/iam/engineers_group.tf
+│       │       │   ├── ./infra/terraform/envs/prod/iam/github_oidc_provider.tf
 │       │       │   ├── ./infra/terraform/envs/prod/iam/main.tf
 │       │       │   ├── ./infra/terraform/envs/prod/iam/outputs.tf
 │       │       │   ├── ./infra/terraform/envs/prod/iam/policy_engineer_tunnels.tf
@@ -571,7 +444,6 @@
 ├── ./local_smoke.txt
 ├── ./logs
 │   └── ./logs/dbt.log
-├── ./monitoring
 ├── ./notebooks
 │   ├── ./notebooks/.DS_Store
 │   ├── ./notebooks/01_problem_framing_and_data_contract.ipynb
@@ -589,7 +461,9 @@
 │       │   ├── ./orchestration/airflow/dags/01_minimal_test.py
 │       │   ├── ./orchestration/airflow/dags/10_m5_full_refresh.py
 │       │   ├── ./orchestration/airflow/dags/10_m5_full_refresh_mwaa.py
-│       │   ├── ./orchestration/airflow/dags/20_train_lightgbm_ecs.py
+│       │   ├── ./orchestration/airflow/dags/20_export_training_extract_ecs.py
+│       │   ├── ./orchestration/airflow/dags/21_train_lightgbm_ecs.py
+│       │   ├── ./orchestration/airflow/dags/22_predict_next_28_days_ecs.py
 │       │   ├── ./orchestration/airflow/dags/_lib
 │       │   │   └── ./orchestration/airflow/dags/_lib/dag_utils.py
 │       │   └── ./orchestration/airflow/dags/include
@@ -725,14 +599,11 @@
 │       ├── ./quality/specs/trends_interest_over_time.py
 │       └── ./quality/specs/weather_daily.py
 ├── ./requirements-alembic.txt
-├── ./requirements-dashboard.txt
 ├── ./requirements-dbt.txt
 ├── ./requirements-mwaa.txt
 ├── ./requirements.txt
 ├── ./scripts
-│   ├── ./scripts/export_dashboard_feature_mart.py
 │   └── ./scripts/secret_scan.sh
-├── ./serving
 ├── ./test.ipynb
 ├── ./training
 │   ├── ./training/__init__.py
@@ -741,8 +612,10 @@
 │   │   └── ./training/configs/config.py
 │   ├── ./training/data_extract
 │   │   ├── ./training/data_extract/__init__.py
+│   │   ├── ./training/data_extract/config.py
 │   │   ├── ./training/data_extract/dataset.py
-│   │   └── ./training/data_extract/export_training_extract.py
+│   │   ├── ./training/data_extract/export_training_extract_legacy.py
+│   │   └── ./training/data_extract/unload_training_extract.py
 │   ├── ./training/evaluation
 │   │   ├── ./training/evaluation/__init__.py
 │   │   └── ./training/evaluation/evaluate.py
@@ -759,7 +632,8 @@
 │   │   ├── ./training/prediction/config.py
 │   │   ├── ./training/prediction/forecast_runner.py
 │   │   ├── ./training/prediction/inference.py
-│   │   └── ./training/prediction/predict_next_28_days.py
+│   │   ├── ./training/prediction/predict_next_28_days.py
+│   │   └── ./training/prediction/writeback.py
 │   ├── ./training/runtime_cli.py
 │   ├── ./training/settings
 │   │   ├── ./training/settings/__init__.py
@@ -817,7 +691,9 @@
     │   │   ├── ./warehouse/models/gold/gold_m5_training_daily_with_weather.sql
     │   │   └── ./warehouse/models/gold/schema.yml
     │   ├── ./warehouse/models/gold_ml
-    │   │   └── ./warehouse/models/gold_ml/gold_forecasts_top20.sql
+    │   │   ├── ./warehouse/models/gold_ml/gold_ml_forecast_run_monitoring.sql
+    │   │   ├── ./warehouse/models/gold_ml/gold_ml_latest_forecast_freshness.sql
+    │   │   └── ./warehouse/models/gold_ml/schema.yml
     │   ├── ./warehouse/models/silver
     │   │   ├── ./warehouse/models/silver/schema.yml
     │   │   ├── ./warehouse/models/silver/silver_m5_calendar.sql
@@ -859,6 +735,27 @@
     │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_sales.sql
     │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_store_id.sql
     │   │       │   │       └── ./warehouse/target/compiled/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_wm_yr_wk.sql
+    │   │       │   ├── ./warehouse/target/compiled/warehouse/models/gold_ml
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/gold_ml/gold_ml_forecast_run_monitoring.sql
+    │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/gold_ml/gold_ml_latest_forecast_freshness.sql
+    │   │       │   │   └── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_feature_set_name.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_forecast_row_count.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_forecast_series_count.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_generated_at.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_max_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_min_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_model_name.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_model_version.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_foreca_16247dd4af7da45e7a9c943fc2e70d12.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_foreca_63837d10c3265613e1f9666d3f44d502.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_feature_set_name.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_forecast_row_count.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_generated_at.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_max_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_min_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_model_name.sql
+    │   │       │   │       └── ./warehouse/target/compiled/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_model_version.sql
     │   │       │   ├── ./warehouse/target/compiled/warehouse/models/silver
     │   │       │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml
     │   │       │   │   │   ├── ./warehouse/target/compiled/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_d.sql
@@ -918,6 +815,27 @@
     │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_sales.sql
     │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_store_id.sql
     │   │       │   │       └── ./warehouse/target/run/warehouse/models/gold/schema.yml/not_null_gold_m5_training_daily_wm_yr_wk.sql
+    │   │       │   ├── ./warehouse/target/run/warehouse/models/gold_ml
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/gold_ml/gold_ml_forecast_run_monitoring.sql
+    │   │       │   │   ├── ./warehouse/target/run/warehouse/models/gold_ml/gold_ml_latest_forecast_freshness.sql
+    │   │       │   │   └── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_feature_set_name.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_forecast_row_count.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_forecast_series_count.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_generated_at.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_max_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_min_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_model_name.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_forecast_run_monitoring_model_version.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_foreca_16247dd4af7da45e7a9c943fc2e70d12.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_foreca_63837d10c3265613e1f9666d3f44d502.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_feature_set_name.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_forecast_row_count.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_generated_at.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_max_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_min_forecast_date.sql
+    │   │       │   │       ├── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_model_name.sql
+    │   │       │   │       └── ./warehouse/target/run/warehouse/models/gold_ml/schema.yml/not_null_gold_ml_latest_forecast_freshness_model_version.sql
     │   │       │   ├── ./warehouse/target/run/warehouse/models/silver
     │   │       │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml
     │   │       │   │   │   ├── ./warehouse/target/run/warehouse/models/silver/schema.yml/not_null_silver_m5_calendar_d.sql

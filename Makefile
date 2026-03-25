@@ -693,3 +693,25 @@ mlops-ci-push-mlflow:
 	@echo "Region:      $(AWS_REGION)"
 	@echo "Image tag:   mlflow-2.14.3"
 	@$(MAKE) docker-push-mlflow
+
+
+
+# ==============================================================================
+# Layer 2 forecast app
+# ==============================================================================
+run-forecast-app:
+	streamlit run forecast_app/app.py
+# local testing
+run-forecast-app_direct_warehouse_read:
+	streamlit run forecast_app/direct_warehouse_read_app.py
+
+
+# ==============================================================================
+# Layer 2 snapshot export
+# ==============================================================================
+export-forecast-app-snapshot:
+	python -m forecast_app.snapshot_export.export_latest_snapshot
+
+
+
+	

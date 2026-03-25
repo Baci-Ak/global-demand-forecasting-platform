@@ -21,6 +21,7 @@ locals {
   airflow_bucket_name          = "${var.project_name}-${var.environment}-airflow-${local.bucket_name_suffix}"
   mlflow_artifacts_bucket_name = "${var.project_name}-${var.environment}-mlflow-artifacts-${local.bucket_name_suffix}"
   training_extracts_bucket_name = "${var.project_name}-${var.environment}-training-extracts-${local.bucket_name_suffix}"
+  forecast_application_bucket_name = "${var.project_name}-${var.environment}-forecast-application-${local.bucket_name_suffix}"
 }
 
 
@@ -111,5 +112,25 @@ module "training_extracts_bucket" {
   tags = {
     component = "ml-training"
     purpose   = "training-extracts"
+  }
+}
+
+
+
+module "forecast_application_bucket" {
+  source = "../../../modules/s3"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  bucket_name       = local.forecast_application_bucket_name
+  enable_versioning = var.enable_versioning
+
+  sse_algorithm = var.s3_sse_algorithm
+  force_destroy = var.s3_force_destroy
+
+  tags = {
+    component = "prediction_app"
+    purpose   = "forecast_application"
   }
 }

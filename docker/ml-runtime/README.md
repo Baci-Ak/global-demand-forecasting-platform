@@ -8,7 +8,3 @@ Initial jobs:
 - training.pipelines.train_lightgbm
 - training.pipelines.predict_next_28_days
 
-Notes:
-- image will be pushed to the Terraform-managed ECR repository
-- ECS tasks will use this image
-- MWAA will later trigger these ECS tasks

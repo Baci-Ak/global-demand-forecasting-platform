@@ -1,0 +1,12 @@
+{
+  "snapshot_run_id": "20260324T155016Z",
+  "refreshed_at": "20260324T155016Z",
+  "source_generated_at": "2026-03-24 03:52:57.206136",
+  "model_name": "gdf_lightgbm_demand_forecasting",
+  "model_version": "7",
+  "feature_set_name": "calendar_lag_rolling_baseline",
+  "forecast_row_count": 14000,
+  "forecast_series_count": 500,
+  "forecast_horizon_days": 28,
+  "monitoring_row_count": 1
+}
