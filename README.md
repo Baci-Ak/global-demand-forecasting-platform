@@ -32,7 +32,7 @@ This repository is the source of truth for the implemented platform.
 
 
 
-## ✅ Current status
+## 📌 Current status
 
 **Project status: complete**
 
@@ -140,7 +140,7 @@ The current production feature set is based on:
 
 The training and prediction workflow is orchestrated by MWAA and executed on ECS / Fargate.
 
-### Modern High Level ML Platform Architecture
+
 ![ML Platform Flow](docs/diagrams/ml-platform-flow.png)
 
 
@@ -245,7 +245,7 @@ The data platform depends on:
 - MWAA startup config being current
 - the project wheel being available to MWAA
 
-### Modern High Level Data Platform Architecture
+
 ![Data Platform Flow](docs/diagrams/data-platform-flow.png) 
 
 
@@ -291,7 +291,6 @@ Warehouse monitoring outputs include:
 - forecast run monitoring
 - latest forecast freshness
 
-### Modern High Level ML Platform Architecture
 
 ![ML Platform Flow](docs/diagrams/ml-platform-flow.png)
 
