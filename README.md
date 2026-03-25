@@ -5,6 +5,9 @@ Production-grade AWS data platform, warehouse, MLOps, and forecast application f
 
 The repository contains the implemented platform as it exists today. It covers the full path from raw source ingestion to warehouse transformation, model training, batch forecasting, forecast writeback, and snapshot-based application delivery.
 
+![Overall System Architecture](docs/diagrams/overall-system-architecture.png)
+
+
 ## 📖 Contents
 
 - [📌 What this project is](#-what-this-project-is)
@@ -27,8 +30,7 @@ It ingests source data, lands raw datasets in Bronze storage, validates them, lo
 
 This repository is the source of truth for the implemented platform.
 
-### High Level Overall System Architecture
-![Overall System Architecture](docs/diagrams/overall-system-architecture.png)
+
 
 ## ✅ Current status
 
@@ -110,7 +112,7 @@ Implemented source families:
 - macroeconomic data from FRED
 - search trends data from Google Trends
 
-### Modern High Level Data Platform Architecture
+
 ![Data Platform Flow](docs/diagrams/data-platform-flow.png)
 
 
