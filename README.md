@@ -403,8 +403,6 @@ Use the quickstart here:
 
 ## 🧭 Operating principles
 
-The documentation and the platform should always be understood through the implemented system, not older planning ideas.
-
 The operating rules of this repository are:
 
 * batch ingestion, not streaming ingestion
