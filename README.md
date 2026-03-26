@@ -3,15 +3,14 @@
 
 Production-grade AWS data platform, warehouse, MLOps, and forecast application for retail demand forecasting.
 
-The repository contains the implemented platform as it exists today. It covers the full path from raw source ingestion to warehouse transformation, model training, batch forecasting, forecast writeback, and snapshot-based application delivery.
+The repository contains the implemented platform. It covers the full path from raw source ingestion to warehouse transformation, model training, batch forecasting, forecast writeback, and snapshot-based application delivery.
 
-![Overall System Architecture](docs/diagrams/overall-system-architecture.png)
-
+![End-to-End-Platform-Summary](docs/diagrams/End-to-End-Platform-Summary2.png)
 
 ## 📖 Contents
 
 - [📌 What this project is](#-what-this-project-is)
-- [✅ Current status](#-current-status)
+- [📌 Current status](#-current-status)
 - [🧱 Platform at a glance](#-platform-at-a-glance)
 - [🗺️ Documentation map](#️-documentation-map)
 - [🏗️ Infrastructure](#️-infrastructure)
@@ -21,6 +20,10 @@ The repository contains the implemented platform as it exists today. It covers t
 - [⚙️ Developer quickstart](#️-developer-quickstart)
 - [🗂️ Repository structure](#️-repository-structure)
 - [🧭 Operating principles](#-operating-principles)
+- [📄 License](#-license)
+- [👤 Author and contact](#-author-and-contact)
+- [🌐 Data sources and APIs](#-data-sources-and-apis)
+- [🔗 References](#-references)
 
 ## 📌 What this project is
 
@@ -28,9 +31,7 @@ The Global Demand Forecasting Platform is an end-to-end batch forecasting system
 
 It ingests source data, lands raw datasets in Bronze storage, validates them, loads them into Redshift, builds curated dbt models, exports production training extracts, trains and registers models through MLflow, runs ECS-based batch prediction, writes forecasts back to the warehouse, and serves a separate snapshot-based forecast application.
 
-This repository is the source of truth for the implemented platform.
-
-
+![Overall System Architecture](docs/diagrams/overall-system-architecture.png)
 
 ## 📌 Current status
 
@@ -83,7 +84,7 @@ It includes:
 
 ### Modern High Level Infrastructure and IaC Architecture 
 
-![Infrastructure and IaC Architecture](docs/diagrams/infrastructure-iac-architecture.png)
+![Infrastructure and IaC Architecture](docs/diagrams/infrastructure-iac-architecture2.png)
 
 Read the full infrastructure documentation here:
 
@@ -113,7 +114,7 @@ Implemented source families:
 - search trends data from Google Trends
 
 
-![Data Platform Flow](docs/diagrams/data-platform-flow.png)
+![Data Platform Flow](docs/diagrams/data-platform-flow3.png)
 
 
 Read the full data-platform documentation here:
@@ -141,7 +142,7 @@ The current production feature set is based on:
 The training and prediction workflow is orchestrated by MWAA and executed on ECS / Fargate.
 
 
-![ML Platform Flow](docs/diagrams/ml-platform-flow.png)
+![ML Platform Flow](docs/diagrams/ml-platform-flow2.png)
 
 
 Read the full ML-platform documentation here:
@@ -162,6 +163,7 @@ The implemented behavior is:
 - a local cache is written for fallback
 - the Streamlit application reads S3 first, then local cache
 
+![Snapshot Serving Architecture](docs/diagrams/snapshot-serving-architecture.png)
 
 The forecast application setup and run path is referenced through the quickstart and platform documents.
 
@@ -246,7 +248,7 @@ The data platform depends on:
 - the project wheel being available to MWAA
 
 
-![Data Platform Flow](docs/diagrams/data-platform-flow.png) 
+
 
 
 For source setup, audit migration, local run flow, MWAA run flow, and data-platform CI/CD, use:
@@ -292,7 +294,7 @@ Warehouse monitoring outputs include:
 - latest forecast freshness
 
 
-![ML Platform Flow](docs/diagrams/ml-platform-flow.png)
+![ML Platform Flow](docs/diagrams/ml-platform-flow2.png)
 
 ### MLOps and image delivery
 
@@ -304,8 +306,6 @@ The platform has a separate production image deployment path for:
 ### ML Image CI/CD Flow
 ![ML Image CI/CD Flow](docs/diagrams/ml-image-cicd-flow.png)
 
-- the ECS ML runtime image
-- the MLflow image
 
 The manual GitHub workflow is:
 
@@ -340,6 +340,7 @@ The local snapshot export command is:
 
 ```bash
 make export-forecast-app-snapshot
+```
 
 The local application command is:
 
@@ -415,15 +416,14 @@ The operating rules of this repository are:
 * infrastructure, data platform, ML platform, and developer workflow are documented separately and referenced cleanly
 
 
-
-
 ## 📄 License
 
-This project is released under the MIT License.
+This project is released under the Apache License 2.0.
 
 See the full license text in:
 
 - [LICENSE.txt](LICENSE.txt)
+
 
 ## 👤 Author and contact
 
@@ -433,6 +433,43 @@ Connect here:
 
 - [LinkedIn](https://www.linkedin.com/in/basseyakom/)
 - [GitHub](https://github.com/Baci-Ak)
+
+
+
+## 🌐 Data sources and APIs
+
+The platform currently uses the following external data sources and source-access APIs.
+
+These links are the easiest starting point if you want to reuse the same source pattern in your own project or adapt the architecture for a similar workflow system.
+
+### M5 retail demand dataset
+
+The retail demand baseline used in this project comes from the M5 Forecasting dataset on Kaggle.
+
+- [Kaggle M5 competition overview](https://www.kaggle.com/competitions/m5-forecasting-accuracy)
+- [Kaggle API documentation](https://www.kaggle.com/docs/api)
+
+### Weather data
+
+Historical weather inputs are sourced through Open-Meteo.
+
+- [Open-Meteo historical weather API](https://open-meteo.com/en/docs/historical-weather-api)
+
+### Macroeconomic data
+
+Macroeconomic series are sourced from FRED.
+
+- [FRED API overview](https://fred.stlouisfed.org/docs/api/fred/)
+- [FRED API key documentation](https://fred.stlouisfed.org/docs/api/api_key.html)
+
+### Search trends data
+
+Search trend inputs are sourced from Google Trends access patterns.
+
+- [Google Trends](https://trends.google.com/)
+- [Pytrends project](https://github.com/GeneralMills/pytrends)
+
+
 
 ## 🔗 References
 
