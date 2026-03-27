@@ -1,20 +1,13 @@
 """
 forecast_app.ui.styles
 
-Shared visual styling for the public forecast application.
+Shared styling helpers for the public forecast application.
 
 Purpose
 -------
-- define the main visual language for the app
-- keep app-wide styling out of page files
-- support a clean, modern, dashboard-style layout
-
-Design principles
------------------
-- public-facing and business-friendly
-- clear visual hierarchy
-- minimal noise
-- reusable across pages
+- centralize global visual styling
+- keep page files focused on content and interaction
+- provide a polished, business-friendly interface layer
 """
 
 from __future__ import annotations
@@ -22,145 +15,208 @@ from __future__ import annotations
 import streamlit as st
 
 
-# ============================================================
-# App shell styling
-# ============================================================
-
 def apply_global_styles() -> None:
     """
-    Apply the shared visual theme for the forecast application.
+    Apply the global visual styling used across the app.
     """
     st.markdown(
         """
         <style>
-        /* -----------------------------------------------------
-           Main layout
-        ----------------------------------------------------- */
+        /* ---------------------------------------------------------
+           Page shell
+        --------------------------------------------------------- */
+        .stApp {
+            background:
+                radial-gradient(circle at top left, rgba(29, 78, 216, 0.06), transparent 28%),
+                linear-gradient(180deg, #f8fbff 0%, #f4f7fb 100%);
+            color: #0f172a;
+        }
+
         .block-container {
-            padding-top: 1.6rem;
-            padding-bottom: 2.2rem;
-            padding-left: 2rem;
-            padding-right: 2rem;
-            max-width: 1450px;
+            max-width: 1380px;
+            padding-top: 1.4rem;
+            padding-bottom: 2rem;
         }
 
-        /* -----------------------------------------------------
+        /* ---------------------------------------------------------
            Sidebar
-        ----------------------------------------------------- */
+        --------------------------------------------------------- */
         section[data-testid="stSidebar"] {
-            border-right: 1px solid rgba(120, 120, 120, 0.12);
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+            border-right: 1px solid rgba(148, 163, 184, 0.18);
         }
 
-        section[data-testid="stSidebar"] .block-container {
-            padding-top: 1.2rem;
+        section[data-testid="stSidebar"] .stRadio > div {
+            gap: 0.25rem;
         }
 
-        /* -----------------------------------------------------
-           App title area
-        ----------------------------------------------------- */
-        .gdf-app-kicker {
-            font-size: 0.82rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #4f46e5;
-            margin-bottom: 0.4rem;
+        /* ---------------------------------------------------------
+           Header
+        --------------------------------------------------------- */
+        .gdf-page-header {
+            padding: 1.2rem 1.25rem 1rem 1.25rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 22px;
+            background: linear-gradient(135deg, #ffffff 0%, #f6faff 100%);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            margin-bottom: 1rem;
         }
 
-        .gdf-app-title {
-            font-size: 2.2rem;
+        .gdf-page-title {
+            font-size: 2rem;
             font-weight: 800;
             line-height: 1.15;
-            margin-bottom: 0.4rem;
-            color: #111827;
+            color: #0f172a;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
         }
 
-        .gdf-app-subtitle {
+        .gdf-page-subtitle {
             font-size: 1rem;
-            color: #6b7280;
+            line-height: 1.65;
+            color: #475569;
             max-width: 900px;
-            margin-bottom: 1.2rem;
         }
 
-        /* -----------------------------------------------------
-           Card sections
-        ----------------------------------------------------- */
+        /* ---------------------------------------------------------
+           Cards
+        --------------------------------------------------------- */
         .gdf-card {
-            padding: 1.15rem 1.15rem 1rem 1.15rem;
-            border: 1px solid rgba(120, 120, 120, 0.12);
-            border-radius: 18px;
-            background: #ffffff;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-            margin-bottom: 1rem;
+            padding: 1.05rem 1.1rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+            margin-bottom: 0.95rem;
+            backdrop-filter: blur(6px);
         }
 
         .gdf-card-title {
             font-size: 1.02rem;
             font-weight: 700;
-            color: #111827;
-            margin-bottom: 0.25rem;
+            color: #0f172a;
+            margin-bottom: 0.4rem;
+            letter-spacing: -0.01em;
         }
 
         .gdf-card-subtitle {
-            font-size: 0.92rem;
-            color: #6b7280;
-            margin-bottom: 0.9rem;
+            font-size: 0.96rem;
+            line-height: 1.68;
+            color: #475569;
         }
 
-        /* -----------------------------------------------------
-           Insight chips
-        ----------------------------------------------------- */
+        /* ---------------------------------------------------------
+           Chips
+        --------------------------------------------------------- */
         .gdf-chip {
             display: inline-block;
-            padding: 0.34rem 0.7rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.6rem;
+            padding: 0.48rem 0.8rem;
             border-radius: 999px;
-            font-size: 0.84rem;
+            background: rgba(29, 78, 216, 0.08);
+            border: 1px solid rgba(29, 78, 216, 0.14);
+            color: #1d4ed8;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        /* ---------------------------------------------------------
+        Sidebar navigation polish
+        --------------------------------------------------------- */
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 14px;
+            padding: 0.35rem 0.55rem;
+            margin-bottom: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        section[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
+            background: rgba(255, 255, 255, 0.96);
+            border-color: rgba(29, 78, 216, 0.18);
+        }
+
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] div[role="radio"] {
+            transform: scale(0.92);
+        }
+
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] p {
+            font-size: 0.96rem;
             font-weight: 600;
-            margin-right: 0.45rem;
-            margin-bottom: 0.45rem;
-            border: 1px solid rgba(79, 70, 229, 0.16);
-            background: rgba(79, 70, 229, 0.08);
-            color: #3730a3;
+            color: #1f2937;
         }
 
-        .gdf-chip-neutral {
-            display: inline-block;
-            padding: 0.34rem 0.7rem;
-            border-radius: 999px;
-            font-size: 0.84rem;
-            font-weight: 600;
-            margin-right: 0.45rem;
-            margin-bottom: 0.45rem;
-            border: 1px solid rgba(107, 114, 128, 0.18);
-            background: rgba(107, 114, 128, 0.08);
-            color: #374151;
-        }
 
-        /* -----------------------------------------------------
-           Sidebar helper text
-        ----------------------------------------------------- */
-        .gdf-sidebar-title {
-            font-size: 1rem;
-            font-weight: 800;
-            color: #111827;
-            margin-bottom: 0.25rem;
-        }
-
-        .gdf-sidebar-text {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-bottom: 1rem;
-            line-height: 1.45;
-        }
-
-        /* -----------------------------------------------------
-           Hide Streamlit default spacing quirks slightly
-        ----------------------------------------------------- */
-        div[data-testid="stMetric"] {
-            border: 1px solid rgba(120, 120, 120, 0.12);
+        /* ---------------------------------------------------------
+        Filter controls polish
+        --------------------------------------------------------- */
+        div[data-testid="stDateInput"],
+        div[data-testid="stMultiSelect"] {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.16);
             border-radius: 16px;
-            padding: 0.65rem 0.8rem;
-            background: #ffffff;
+            padding: 0.45rem 0.65rem 0.35rem 0.65rem;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+        }
+
+        div[data-testid="stDateInput"] label,
+        div[data-testid="stMultiSelect"] label {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        div[data-baseweb="select"] > div {
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            border-radius: 12px !important;
+            min-height: 42px !important;
+            background: #ffffff !important;
+        }
+
+        div[data-baseweb="input"] > div {
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            border-radius: 12px !important;
+            min-height: 42px !important;
+            background: #ffffff !important;
+        }
+
+        /* ---------------------------------------------------------
+           Native Streamlit polish
+        --------------------------------------------------------- */
+        div[data-testid="stMetric"] {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 18px;
+            padding: 0.9rem 1rem;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+        }
+
+        div[data-testid="stMetricLabel"] {
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        div[data-testid="stMetricValue"] {
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        .stDataFrame, .stTable {
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        /* ---------------------------------------------------------
+           Small spacing helpers
+        --------------------------------------------------------- */
+        .gdf-spacer-sm {
+            height: 0.35rem;
+        }
+
+        .gdf-spacer-md {
+            height: 0.8rem;
         }
         </style>
         """,
@@ -168,33 +224,15 @@ def apply_global_styles() -> None:
     )
 
 
-# ============================================================
-# Shared shell sections
-# ============================================================
-
 def render_app_header(*, title: str, subtitle: str) -> None:
     """
-    Render the main page header used across the public app.
+    Render a consistent page header.
     """
     st.markdown(
         f"""
-        <div class="gdf-app-kicker">Retail Demand Forecasting</div>
-        <div class="gdf-app-title">{title}</div>
-        <div class="gdf-app-subtitle">{subtitle}</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_section_intro(*, title: str, subtitle: str) -> None:
-    """
-    Render a reusable section container header.
-    """
-    st.markdown(
-        f"""
-        <div class="gdf-card">
-            <div class="gdf-card-title">{title}</div>
-            <div class="gdf-card-subtitle">{subtitle}</div>
+        <div class="gdf-page-header">
+            <div class="gdf-page-title">{title}</div>
+            <div class="gdf-page-subtitle">{subtitle}</div>
         </div>
         """,
         unsafe_allow_html=True,

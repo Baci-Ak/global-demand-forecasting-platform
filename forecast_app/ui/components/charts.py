@@ -88,7 +88,7 @@ def _render_ranked_bar_chart(
             f"{category_col}:N",
             sort="-y",
             title="",
-            axis=alt.Axis(labelAngle=-30, labelLimit=180),
+            axis=alt.Axis(labelAngle=-35, labelLimit=220, labelOverlap=False,),
         ),
         y=alt.Y(
             f"{value_col}:Q",
