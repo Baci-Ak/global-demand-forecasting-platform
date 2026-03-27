@@ -31,7 +31,7 @@ class SnapshotExportSettings(BaseSettings):
         extra="ignore",
     )
 
-    LAYER2_SNAPSHOT_BUCKET: str
+    LAYER2_SNAPSHOT_BUCKET: str | None = None
     LAYER2_SNAPSHOT_PREFIX: str = "layer2"
 
     LOCAL_SNAPSHOT_CACHE_DIR: str = "forecast_app/local_cache"
