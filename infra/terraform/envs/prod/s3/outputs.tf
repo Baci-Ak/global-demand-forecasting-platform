@@ -64,3 +64,20 @@ output "training_extracts_bucket_name" {
   description = "S3 bucket name for ML training extracts."
   value       = module.training_extracts_bucket.bucket_name
 }
+
+
+
+output "forecast_application_bucket_name" {
+  description = "S3 bucket name for the forecast application snapshots."
+  value       = module.forecast_application_bucket.bucket_name
+}
+
+output "forecast_application_bucket_arn" {
+  description = "ARN of the S3 bucket used for forecast application snapshots."
+  value       = module.forecast_application_bucket.bucket_arn
+}
+
+output "forecast_application_bucket_id" {
+  description = "ID of the S3 bucket used for forecast application snapshots."
+  value       = module.forecast_application_bucket.bucket_id
+}

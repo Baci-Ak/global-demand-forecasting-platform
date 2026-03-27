@@ -30,7 +30,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gdf*", "ingestion*", "quality*", "warehouse*", "database*", "audit_log*", "app_config*"]
+include = ["gdf*", "ingestion*", "quality*", "warehouse*", "database*", "audit_log*", "app_config*", "training*", "forecast_app*"]
 exclude = ["tests*", ".build*", "build*", "dist*"]
 
 [tool.setuptools.package-data]

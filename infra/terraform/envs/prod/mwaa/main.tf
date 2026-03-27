@@ -92,7 +92,8 @@ module "mwaa" {
   airflow_configuration_options = var.airflow_configuration_options
 
   data_bucket_names = [
-  data.terraform_remote_state.s3.outputs.bronze_bucket_name
+  data.terraform_remote_state.s3.outputs.bronze_bucket_name,
+  data.terraform_remote_state.s3.outputs.forecast_application_bucket_name
 ]
  
 

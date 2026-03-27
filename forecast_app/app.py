@@ -1,19 +1,21 @@
 """
 forecast_app.app
 
-Streamlit entrypoint for the Layer 2 forecast interface.
+Public Streamlit entrypoint for the forecast application.
 
 Purpose
 -------
-- provide the first public-facing UI on top of production forecast snapshots
-- read the latest successful snapshot from S3
-- fall back to local cached snapshots if S3 is unavailable
+- provide the main public-facing app shell
+- load snapshot-backed forecast data
+- route users between product-style pages
+- keep the entrypoint thin and easy to maintain
 
 Design principles
 -----------------
-- keep the entrypoint thin
-- keep data access separate from presentation
-- never require live warehouse connectivity for user-facing reads
+- snapshot-first reads only
+- business-friendly navigation
+- modular page rendering
+- future-ready structure for deployment beyond Streamlit
 """
 
 from __future__ import annotations
@@ -33,37 +35,95 @@ from forecast_app.data_access.snapshot_reader import (
     read_latest_forecast_freshness,
     read_snapshot_metadata,
 )
-from forecast_app.ui.pages import (
-    render_app_shell_styles,
-    render_forecast_run_monitoring,
-    render_latest_forecast_freshness,
-    render_recent_forecast_rows,
-    render_snapshot_metadata,
-    render_snapshot_status,
-)
+from forecast_app.ui.navigation import render_sidebar_navigation
+from forecast_app.ui.pages.about import render_about_page
+from forecast_app.ui.pages.data_refresh import render_data_refresh_page
+from forecast_app.ui.pages.forecast_explorer import render_forecast_explorer_page
+from forecast_app.ui.pages.overview import render_overview_page
+from forecast_app.ui.pages.product_performance import render_product_performance_page
+from forecast_app.ui.pages.store_performance import render_store_performance_page
+from forecast_app.ui.pages.trends import render_trends_page
+from forecast_app.ui.styles import apply_global_styles
 
+
+# ============================================================
+# Page configuration
+# ============================================================
 
 st.set_page_config(
-    page_title="GDF Forecast App",
+    page_title="Global Demand Forecasting",
+    page_icon="📈",
     layout="wide",
 )
-render_app_shell_styles()
 
-st.title("Global Demand Forecasting")
-st.caption("Layer 2 forecast application reading from production snapshot outputs")
+apply_global_styles()
 
-metadata, metadata_source = read_snapshot_metadata()
-freshness_df, freshness_source = read_latest_forecast_freshness()
-monitoring_df, monitoring_source = read_forecast_run_monitoring()
-forecast_rows_df, forecast_rows_source = read_forecast_rows()
 
-render_snapshot_status(
-    metadata_source=metadata_source,
-    freshness_source=freshness_source,
-    monitoring_source=monitoring_source,
-    forecast_rows_source=forecast_rows_source,
-)
-render_snapshot_metadata(metadata)
-render_latest_forecast_freshness(freshness_df)
-render_forecast_run_monitoring(monitoring_df)
-render_recent_forecast_rows(forecast_rows_df)
+# ============================================================
+# Snapshot data loading
+# ============================================================
+
+@st.cache_data(show_spinner=False)
+def load_snapshot_payload() -> dict:
+    """
+    Load all snapshot-backed datasets required by the public app.
+
+    Returns
+    -------
+    dict
+        Dictionary containing metadata, source labels, and dataframes.
+    """
+    metadata, metadata_source = read_snapshot_metadata()
+    freshness_df, freshness_source = read_latest_forecast_freshness()
+    monitoring_df, monitoring_source = read_forecast_run_monitoring()
+    forecast_rows_df, forecast_rows_source = read_forecast_rows()
+
+    return {
+        "metadata": metadata,
+        "metadata_source": metadata_source,
+        "freshness_df": freshness_df,
+        "freshness_source": freshness_source,
+        "monitoring_df": monitoring_df,
+        "monitoring_source": monitoring_source,
+        "forecast_rows_df": forecast_rows_df,
+        "forecast_rows_source": forecast_rows_source,
+    }
+
+
+payload = load_snapshot_payload()
+
+
+# ============================================================
+# Sidebar navigation
+# ============================================================
+
+selected_page = render_sidebar_navigation()
+
+
+# ============================================================
+# Page routing
+# ============================================================
+
+if selected_page == "Overview":
+    render_overview_page(payload)
+
+elif selected_page == "Forecast Explorer":
+    render_forecast_explorer_page(payload)
+
+elif selected_page == "Store Performance":
+    render_store_performance_page(payload)
+
+elif selected_page == "Product Performance":
+    render_product_performance_page(payload)
+
+elif selected_page == "Trends":
+    render_trends_page(payload)
+
+elif selected_page == "Data & Refresh":
+    render_data_refresh_page(payload)
+
+elif selected_page == "About":
+    render_about_page(payload)
+
+else:
+    st.error("The selected page could not be loaded.")

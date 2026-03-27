@@ -1,0 +1,7 @@
+streamlit==1.44.1
+pandas==2.2.3
+pyarrow==19.0.1
+boto3==1.33.13
+pydantic-settings==2.2.1
+SQLAlchemy==1.4.51
+psycopg2-binary==2.9.9
