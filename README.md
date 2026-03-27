@@ -17,6 +17,7 @@ The repository contains the implemented platform. It covers the full path from r
 - [🌊 Data platform](#-data-platform)
 - [🤖 ML platform](#-ml-platform)
 - [📊 Forecast application](#-forecast-application)
+- [🚀 Live application](#-live-application)
 - [⚙️ Developer quickstart](#️-developer-quickstart)
 - [🗂️ Repository structure](#️-repository-structure)
 - [🧭 Operating principles](#-operating-principles)
@@ -358,6 +359,15 @@ This application layer is intentionally decoupled from direct live warehouse ser
 
 ### Modern High Level Forecast Application Architecture
 ![Snapshot Serving Architecture](docs/diagrams/snapshot-serving-architecture.png)
+
+
+## 🚀 Live application
+
+The public forecast application is live here:
+
+- [Global Demand Forecasting Platform](https://global-demand-forecasting-platform.streamlit.app/)
+
+This deployed application reads published forecast snapshots from S3 and does not require direct live warehouse access from the public interface.
 
 
 
